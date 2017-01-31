@@ -48,7 +48,7 @@ mv * \$pkgdir
 }
 EOF
 # Building the binary package
-makepkg --asroot -c --skipinteg
+makepkg -c --skipinteg
 # Installing it on LFS
 if ! pacman -U --noconfirm $ARCHIVE_NAME; then
      pacman -U --noconfirm --force $ARCHIVE_NAME
