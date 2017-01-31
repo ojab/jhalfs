@@ -20,8 +20,8 @@ Do not change  anything, except the url and the md5 checksum. -->
 <sect1 id="package">
         <para>Download: <ulink url="http://curl.haxx.se/download/curl-7.39.0.tar.lzma"/></para>
         <para>MD5 sum: <literal>e9aa6dec29920eba8ef706ea5823bad7</literal></para>
-        <para>Download: <ulink url="http://www.libarchive.org/downloads/libarchive-3.1.2.tar.gz"/></para>
-        <para>MD5 sum: <literal>efad5a503f66329bb9d2f4308b5de98a</literal></para>
+        <para>Download: <ulink url="http://www.libarchive.org/downloads/libarchive-3.2.2.tar.gz"/></para>
+        <para>MD5 sum: <literal>1ec00b7dcaf969dd2a5712f85f23c764</literal></para>
         <para>Download: <ulink url="ftp://ftp.archlinux.org/other/pacman/pacman-4.1.2.tar.gz"/></para>
         <para>MD5 sum: <literal>063c8b0ff6bdf903dc235445525627cd</literal></para>
 </sect1>
@@ -42,9 +42,9 @@ instruction  contains file="name.html" -->
   <?dbhtml filename="libarchive.html"?>
   <sect2 role="installation">
 <screen><userinput remap="configure">./configure --prefix=/tools \
-            --without-bz2lib \
-            --enable-bsdtar=static \
-            --enable-bsdcpio=static</userinput></screen>
+            --without-xml2 \
+            --disable-shared \
+            --disable-static</userinput></screen>
 <screen><userinput remap="make">make</userinput></screen>
 <screen><userinput remap="install">make install</userinput></screen>
   </sect2>
