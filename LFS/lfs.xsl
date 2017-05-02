@@ -16,7 +16,7 @@
        n = no, original behavior
        y = yes, add PKG_DEST to scripts in install commands of chapter06-08
   -->
-  <xsl:param name="pkgmngt" select="n"/>
+  <xsl:param name="pkgmngt" select="'n'"/>
  
   <!-- Run test suites?
        0 = none
@@ -24,28 +24,28 @@
        2 = all chapter06 testsuites
        3 = all chapter05 and chapter06 testsuites
   -->
-  <xsl:param name="testsuite" select="1"/>
+  <xsl:param name="testsuite" select="'1'"/>
 
   <!-- Bomb on test suites failures?
        n = no, I want to build the full system and review the logs
        y = yes, bomb at the first test suite failure to can review the build dir
   -->
-  <xsl:param name="bomb-testsuite" select="n"/>
+  <xsl:param name="bomb-testsuite" select="'n'"/>
 
   <!-- Install vim-lang package? OBSOLETE should always be 'n'-->
-  <xsl:param name="vim-lang" select="n"/>
+  <xsl:param name="vim-lang" select="'n'"/>
   
   <!-- Time zone -->
-  <xsl:param name="timezone" select="GMT"/>
+  <xsl:param name="timezone" select="'GMT'"/>
   
   <!-- Page size -->
-  <xsl:param name="page" select="letter"/>
+  <xsl:param name="page" select="'letter'"/>
   
   <!-- Locale settings -->
-  <xsl:param name="lang" select="C"/>
+  <xsl:param name="lang" select="'C'"/>
 
   <!-- Install the whole set of locales -->
-  <xsl:param name='full-locale' select='n'/>
+  <xsl:param name="full-locale" select="'n'"/>
   
   <xsl:template match="/">
     <xsl:apply-templates select="//sect1[not(@revision) or
