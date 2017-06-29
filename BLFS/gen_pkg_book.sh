@@ -178,7 +178,7 @@ done
 echo -en "\n\tGenerating the build scripts ...\n"
 rm -rf scripts
 xsltproc --xinclude --nonet \
-         --stringparam sudo $SUDO \
+         --stringparam sudo "$SUDO" \
          -o ./scripts/ ${MakeScripts} \
          ${BookXml}
 # Make the scripts executable.
