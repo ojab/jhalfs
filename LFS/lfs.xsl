@@ -236,7 +236,9 @@ done
 for dir in $PKG_DEST/{boot,etc,lib,bin,sbin}; do
   [[ -z $(ls $dir) ]] &amp;&amp; rmdir -v $dir
 done
+PREV_SEC=${SECONDS}
 packInstall
+SECONDS=${PREV_SEC}
 rm -rf $PKG_DEST
 </xsl:text>
     </xsl:if>
@@ -308,7 +310,9 @@ cd $PKGDIR
                             @role != 'nodump']/userinput[@remap != 'adjust']"
            mode="pkgmngt"/>
         <xsl:if test="$dirname = 'chapter06'">
-          <xsl:text>packInstall
+          <xsl:text>PREV_SEC=${SECONDS}
+packInstall
+SECONDS=${PREV_SEC}
 rm -rf $PKG_DEST
 </xsl:text>
         </xsl:if>
@@ -489,7 +493,9 @@ PKGDIR=$(dirname $PKGDIR)/tzdata-</xsl:text>
         <xsl:text>ZONEINFO=$PKG_DEST</xsl:text>
         <xsl:copy-of select="substring-after(string(),'ZONEINFO=')"/>
         <xsl:text>
+PREV_SEC=${SECONDS}
 packInstall
+SECONDS=${PREV_SEC}
 rm -rf $PKG_DEST
 PKG_DEST=$OLD_PKG_DEST
 unset OLD_PKG_DEST

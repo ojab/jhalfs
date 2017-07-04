@@ -953,7 +953,6 @@ menu "Advanced Features"
 depends !BOOK_BLFS
 
     config    REPORT
-        depends !PKGMNGT
         bool "Create SBU and disk usage report"
         default y
 
