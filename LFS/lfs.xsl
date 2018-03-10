@@ -479,6 +479,7 @@ exit
                 </xsl:call-template>
               </xsl:otherwise>
             </xsl:choose>
+            <xsl:text>&#xA;</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
@@ -654,7 +655,6 @@ unset OLD_PKGDIR
           </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="$outputstring"/>
-            <xsl:text>&#xA;</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:otherwise>
