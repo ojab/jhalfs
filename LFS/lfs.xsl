@@ -194,8 +194,7 @@ esac
     </xsl:if>
     <xsl:if test="../@id = 'ch-system-libelf' and
                   @role='installation' and
-                  $pkgmngt = 'y' and
-                  $wrap-install = 'n'">
+                  $pkgmngt = 'y'">
       <xsl:text>mkdir -pv $PKG_DEST/usr/lib/pkgconfig
 </xsl:text>
     </xsl:if>
