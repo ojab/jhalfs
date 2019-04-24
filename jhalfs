@@ -101,31 +101,37 @@ load_file() {
 
 version="
 ${BOLD}  \"jhalfs\"${OFF} builder tool (development) \$Rev$
-  \$Date$
+ \$Date$ 
 
-  Written by George Boudreau, Manuel Canales Esparcia, Pierre Labastie,
-  plus several contributions.
+  Copyright (C) 2005-2019, the jhalfs team:
+    Jeremy Huntwork
+    George Boudreau
+    Manuel Canales Esparcia
+    Thomas Pegg
+    Matthew Burgess
+    Pierre Labastie
 
-  Based on an idea from Jeremy Huntwork
+  Unless specified, all the files in this directory and its sub-directories
+  are subjected to the ${BOLD}MIT license${OFF}. See the ${BOLD}LICENSE${OFF} file.
 
-  This set of files are published under the
-  ${BOLD}Gnu General Public License, Version 2.${OFF}
-  See the ${BOLD}LICENSE${OFF} file in this directory.
+  The files in the ${BOLD}menu${OFF} directory are subjected to the ${BOLD}ISC License${OFF}.
+  See ${BOLD}LICENSE.txt${OFF} and ${BOLD}README${OFF} in that directory.
 "
+
+usage="${nl_}${tab_}${BOLD}${RED}This script cannot be called directly${OFF}
+${tab_}Type ${BOLD}make${OFF} to run the tool, or
+${tab_}Type ${BOLD}./jhalfs -v${OFF} to display version information."
 
 case $1 in
   -v ) echo "$version" && exit ;;
   run ) : ;;
-  * )
-    echo "${nl_}${tab_}${BOLD}${RED}This script cannot be called directly: EXITING ${OFF}${nl_}"
-    exit 1
-    ;;
+  * ) echo "$usage" && exit 1 ;;
 esac
 
 # If the user has not saved his configuration file, let's ask
 # if he or she really wants to run this stuff
 time_current=$(stat -c '%Y' configuration 2>/dev/null || date +%s)
-time_old=$(stat -c '%Y' configuration.old 2>/dev/null || printf '%s' "$time_current")
+time_old=$(stat -c '%Y' .configuration.old 2>/dev/null || printf '%s' "$time_current")
 if [ "$(printf '%d' "$time_old")" -ge "$(printf '%d' "$time_current")" ] ; then
   printf 'Do you want to run jhalfs? yes/no (yes): '
   read -r ANSWER
@@ -148,7 +154,6 @@ load_file configuration "Loading config params from <configuration>"
 RUNMAKE=${RUNMAKE:-n}
 GETPKG=${GETPKG:-n}
 COMPARE=${COMPARE:-n}
-RUN_FARCE=${RUN_FARCE:-n}
 RUN_ICA=${RUN_ICA:-n}
 PKGMNGT=${PKGMNGT:-n}
 WRAP_INSTALL=${WRAP_INSTALL:-n}

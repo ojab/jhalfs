@@ -112,7 +112,7 @@ default&#9;n
 menu "</xsl:text>
       <xsl:value-of select="name"/>
       <xsl:text>"
-depends MENU_</xsl:text>
+depends on MENU_</xsl:text>
       <xsl:value-of select="@id"/>
       <xsl:text>
 
@@ -140,7 +140,7 @@ depends MENU_</xsl:text>
 &#9;menu "</xsl:text>
       <xsl:value-of select="name"/>
       <xsl:text>"
-&#9;depends MENU_</xsl:text>
+&#9;depends on MENU_</xsl:text>
       <xsl:value-of select="@id"/>
       <xsl:text>
 
@@ -187,7 +187,7 @@ depends MENU_</xsl:text>
 &#9;&#9;menu "</xsl:text>
       <xsl:value-of select="name"/>
       <xsl:text>"
-&#9;&#9;depends MENU_</xsl:text>
+&#9;&#9;depends on MENU_</xsl:text>
       <xsl:value-of select="translate(name,' ()','___')"/>
       <xsl:text>
 
