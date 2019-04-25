@@ -18,6 +18,6 @@ menuconfig:
 # Clean up
 
 clean:
-	rm -f configuration configuration.old error
+	rm -f configuration .configuration.old error
 
 .PHONY: all menuconfig clean

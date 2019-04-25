@@ -25,7 +25,6 @@ fi
 rm -rf ${BUILDDIR}${BLFS_ROOT}/libs/.svn
 rm -rf ${BUILDDIR}${BLFS_ROOT}/xsl/.svn
 rm -rf ${BUILDDIR}${BLFS_ROOT}/menu/.svn
-rm -rf ${BUILDDIR}${BLFS_ROOT}/menu/lxdialog/.svn
 
 # Set some harcoded envars to their proper values
 sed -i s@tracking-dir@$TRACKING_DIR@ \

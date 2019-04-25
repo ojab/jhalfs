@@ -164,6 +164,9 @@ cp README.BLFS ${BUILDDIR}${BLFS_ROOT}
 
 # Clean-up
 [[ $VERBOSITY > 0 ]] && echo Cleaning the ${BUILDDIR}${BLFS_ROOT} directory
+rm -rf ${BUILDDIR}${BLFS_ROOT}/libs/.svn
+rm -rf ${BUILDDIR}${BLFS_ROOT}/xsl/.svn
+rm -rf ${BUILDDIR}${BLFS_ROOT}/menu/.svn
 # We do not want to keep an old version of the book:
 rm -rf ${BUILDDIR}${BLFS_ROOT}/$BLFS_XML
 rm -rf ${BUILDDIR}${BLFS_ROOT}/$LFS_XML
