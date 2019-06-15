@@ -11,10 +11,6 @@ else
   Q = @
 endif
 
-# Known behavior
-LANG=C
-LC_ALL=C
-
 # Makefile should reside in a directory where there are two subdirectories
 # initially:
 TOPDIR           = $(shell pwd)
@@ -102,7 +98,7 @@ $(BOOK_XML): $(CONFIG_OUT)
 
 $(CONFIG_OUT): $(CONFIG_CONFIG_IN)
 	$(Q)CONFIG_="" KCONFIG_CONFIG=configuration \
-	    $(MENU)/menuconfig.py $(CONFIG_CONFIG_IN)
+	    python3 $(MENU)/menuconfig.py $(CONFIG_CONFIG_IN)
 
 $(CONFIG_CONFIG_IN): $(PACK_LIST) $(XSLDIR)/gen_config.xsl
 	$(Q)xsltproc --nonet -o $@ $(XSLDIR)/gen_config.xsl $(PACK_LIST)

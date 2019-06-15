@@ -13,7 +13,8 @@ all: menuconfig
 
 menuconfig:
 	@cp -a configuration configuration.old 2>/dev/null || true
-	@CONFIG_="" KCONFIG_CONFIG=configuration $(CONFIG)/menuconfig.py $(CONFIG_CONFIG_IN)
+	@CONFIG_="" KCONFIG_CONFIG=configuration \
+	    python3 $(CONFIG)/menuconfig.py $(CONFIG_CONFIG_IN)
 
 # Clean up
 

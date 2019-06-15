@@ -25,9 +25,9 @@ choice
 endchoice
 config  MAIL_SERVER
         string
-        default sendmail        if MS_sendmail
-        default postfix         if MS_postfix
-        default exim            if MS_exim
+        default "sendmail"        if MS_sendmail
+        default "postfix"         if MS_postfix
+        default "exim"            if MS_exim
 
 endmenu
 
