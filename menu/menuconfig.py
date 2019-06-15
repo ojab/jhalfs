@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # Copyright (c) 2018-2019, Nordic Semiconductor ASA and Ulf Magnusson
 # SPDX-License-Identifier: ISC
@@ -7,8 +7,8 @@
 Overview
 ========
 
-A curses-based menuconfig implementation. The interface should feel familiar to
-people used to mconf ('make menuconfig').
+A curses-based Python 2/3 menuconfig implementation. The interface should feel
+familiar to people used to mconf ('make menuconfig').
 
 Supports the same keys as mconf, and also supports a set of keybindings
 inspired by Vi:
@@ -20,13 +20,13 @@ inspired by Vi:
   G/End   : Jump to end of list
   g/Home  : Jump to beginning of list
 
+[Space] toggles values if possible, and enters menus otherwise. [Enter] works
+the other way around.
+
 The mconf feature where pressing a key jumps to a menu entry with that
 character in it in the current menu isn't supported. A jump-to feature for
 jumping directly to any symbol (including invisible symbols), choice, menu or
 comment (as in a Kconfig 'comment "Foo"') is available instead.
-
-Space and Enter are "smart" and try to do what you'd expect for the given menu
-entry.
 
 A few different modes are available:
 
@@ -54,6 +54,9 @@ as a command-line argument. With no argument, it defaults to "Kconfig".
 
 The KCONFIG_CONFIG environment variable specifies the .config file to load (if
 it exists) and save. If KCONFIG_CONFIG is unset, ".config" is used.
+
+When overwriting a configuration file, the old version is saved to
+<filename>.old (e.g. .config.old).
 
 $srctree is supported through Kconfiglib.
 
@@ -96,7 +99,7 @@ The color definition is a comma separated list of attributes:
 
     - fg:COLOR      Set the foreground/background colors. COLOR can be one of
       * or *        the basic 16 colors (black, red, green, yellow, blue,
-    - bg:COLOR      magenta,cyan, white and brighter versions, for example,
+    - bg:COLOR      magenta, cyan, white and brighter versions, for example,
                     brightred). On terminals that support more than 8 colors,
                     you can also directly put in a color number, e.g. fg:123
                     (hexadecimal and octal constants are accepted as well).
@@ -171,19 +174,15 @@ Other features
 Limitations
 ===========
 
-  - Python 3 only
+Doesn't work out of the box on Windows, but can be made to work with 'pip
+install windows-curses'. See the
+https://github.com/zephyrproject-rtos/windows-curses repository.
 
-    This is mostly due to Python 2 not having curses.get_wch(), which is needed
-    for Unicode support.
-
-  - Doesn't work out of the box on Windows
-
-    Can be made to work with 'pip install windows-curses' though. See the
-    https://github.com/zephyrproject-rtos/windows-curses repository.
-
-    'pip install kconfiglib' on Windows automatically installs windows-curses
-    to make the menuconfig usable.
+'pip install kconfiglib' on Windows automatically installs windows-curses
+to make the menuconfig usable.
 """
+from __future__ import print_function
+
 import curses
 import errno
 import locale
@@ -193,7 +192,7 @@ import sys
 import textwrap
 
 from kconfiglib import Symbol, Choice, MENU, COMMENT, MenuNode, \
-                       BOOL, TRISTATE, STRING, INT, HEX, UNKNOWN, \
+                       BOOL, TRISTATE, STRING, INT, HEX, \
                        AND, OR, \
                        expr_str, expr_value, split_expr, \
                        standard_sc_expr_str, \
@@ -244,7 +243,7 @@ _MAIN_HELP_LINES = """
 
 # Lines of help text shown at the bottom of the information dialog
 _INFO_HELP_LINES = """
-[ESC/q] Return to menu       [/] Jump to symbol
+[ESC/q] Return to menu      [/] Jump to symbol
 """[1:-1].split("\n")
 
 # Lines of help text shown at the bottom of the search dialog
@@ -628,7 +627,6 @@ def _style_attr(fg_color, bg_color, attribs, color_attribs={}):
 #
 
 
-# Used as the entry point in setup.py
 def _main():
     menuconfig(standard_kconfig())
 
@@ -648,11 +646,11 @@ def menuconfig(kconf):
 
     _kconf = kconf
 
-    # Load existing configuration and set _conf_changed True if it is outdated
-    _conf_changed = _load_config()
-
     # Filename to save configuration to
     _conf_filename = standard_config_filename()
+
+    # Load existing configuration and set _conf_changed True if it is outdated
+    _conf_changed = _load_config()
 
     # Filename to save minimal configuration to
     _minconf_filename = "defconfig"
@@ -671,7 +669,7 @@ def menuconfig(kconf):
 
     # Disable warnings. They get mangled in curses mode, and we deal with
     # errors ourselves.
-    kconf.disable_warnings()
+    kconf.warn = False
 
     # Make curses use the locale settings specified in the environment
     locale.setlocale(locale.LC_ALL, "")
@@ -708,7 +706,8 @@ def _load_config():
     # Returns True if .config is missing or outdated. We always prompt for
     # saving the configuration in that case.
 
-    if not _kconf.load_config():
+    print(_kconf.load_config())
+    if not os.path.exists(_conf_filename):
         # No .config
         return True
 
@@ -728,7 +727,7 @@ def _needs_save():
             if sym.config_string:
                 # Unwritten symbol
                 return True
-        elif sym.type in (BOOL, TRISTATE):
+        elif sym.orig_type in (BOOL, TRISTATE):
             if sym.tri_value != sym.user_value:
                 # Written bool/tristate symbol, new value
                 return True
@@ -769,7 +768,7 @@ def _needs_save():
 #     If True, the corresponding mode is on. See the module docstring.
 #
 #   _conf_filename:
-#     .config file to save the configuration to
+#     File to save the configuration to
 #
 #   _minconf_filename:
 #     File to save minimal configurations to
@@ -801,7 +800,7 @@ def _menuconfig(stdscr):
         curses.doupdate()
 
 
-        c = _get_wch_compat(_menu_win)
+        c = _getch_compat(_menu_win)
 
         if c == curses.KEY_RESIZE:
             _resize_main()
@@ -828,26 +827,17 @@ def _menuconfig(stdscr):
         elif c in (curses.KEY_HOME, "g"):
             _select_first_menu_entry()
 
-        elif c in (curses.KEY_RIGHT, " ", "\n", "l", "L"):
-            # Do appropriate node action. Only Space is treated specially,
-            # preferring to toggle nodes rather than enter menus.
-
+        elif c == " ":
+            # Toggle the node if possible
             sel_node = _shown[_sel_node_i]
-
-            if sel_node.is_menuconfig and not \
-               (c == " " and _prefer_toggle(sel_node.item)):
-
+            if not _change_node(sel_node):
                 _enter_menu(sel_node)
 
-            else:
+        elif c in (curses.KEY_RIGHT, "\n", "l", "L"):
+            # Enter the node if possible
+            sel_node = _shown[_sel_node_i]
+            if not _enter_menu(sel_node):
                 _change_node(sel_node)
-                if _is_y_mode_choice_sym(sel_node.item) and not sel_node.list:
-                    # Immediately jump to the parent menu after making a choice
-                    # selection, like 'make menuconfig' does, except if the
-                    # menu node has children (which can happen if a symbol
-                    # 'depends on' a choice symbol that immediately precedes
-                    # it).
-                    _leave_menu()
 
         elif c in ("n", "N"):
             _set_sel_node_tri_val(0)
@@ -929,8 +919,10 @@ def _quit_dialog():
             return None
 
         if c == "y":
-            if _try_save(_kconf.write_config, _conf_filename, "configuration"):
-                return "Configuration saved to '{}'".format(_conf_filename)
+            # Returns a message to print
+            msg = _try_save(_kconf.write_config, _conf_filename, "configuration")
+            if msg:
+                return msg
 
         elif c == "n":
             return "Configuration ({}) was not saved".format(_conf_filename)
@@ -961,10 +953,12 @@ def _init():
     # Looking for this in addition to KEY_BACKSPACE (which is unreliable) makes
     # backspace work with TERM=vt100. That makes it likely to work in sane
     # environments.
-    #
-    # erasechar() returns a 'bytes' object. Since we use get_wch(), we need to
-    # decode it. Just give up and avoid crashing if it can't be decoded.
-    _ERASE_CHAR = curses.erasechar().decode("utf-8", "ignore")
+    _ERASE_CHAR = curses.erasechar()
+    if sys.version_info[0] >= 3:
+        # erasechar() returns a one-byte bytes object on Python 3. This sets
+        # _ERASE_CHAR to a blank string if it can't be decoded, which should be
+        # harmless.
+        _ERASE_CHAR = _ERASE_CHAR.decode("utf-8", "ignore")
 
     _init_styles()
 
@@ -1059,39 +1053,40 @@ def _width(win):
     return win.getmaxyx()[1]
 
 
-def _prefer_toggle(item):
-    # For nodes with menus, determines whether Space should change the value of
-    # the node's item or enter its menu. We toggle symbols (which have menus
-    # when they're defined with 'menuconfig') and choices that can be in more
-    # than one mode (e.g. optional choices). In other cases, we enter the menu.
-
-    return isinstance(item, Symbol) or \
-           (isinstance(item, Choice) and len(item.assignable) > 1)
-
-
 def _enter_menu(menu):
-    # Makes 'menu' the currently displayed menu. "Menu" here includes choices
-    # and symbols defined with the 'menuconfig' keyword.
+    # Makes 'menu' the currently displayed menu. In addition to actual 'menu's,
+    # "menu" here includes choices and symbols defined with the 'menuconfig'
+    # keyword.
+    #
+    # Returns False if 'menu' can't be entered.
 
     global _cur_menu
     global _shown
     global _sel_node_i
     global _menu_scroll
 
+    if not menu.is_menuconfig:
+        # Not a menu
+        return False
+
     shown_sub = _shown_nodes(menu)
     # Never enter empty menus. We depend on having a current node.
-    if shown_sub:
-        # Remember where the current node appears on the screen, so we can try
-        # to get it to appear in the same place when we leave the menu
-        _parent_screen_rows.append(_sel_node_i - _menu_scroll)
+    if not shown_sub:
+        return False
 
-        # Jump into menu
-        _cur_menu = menu
-        _shown = shown_sub
-        _sel_node_i = _menu_scroll = 0
+    # Remember where the current node appears on the screen, so we can try
+    # to get it to appear in the same place when we leave the menu
+    _parent_screen_rows.append(_sel_node_i - _menu_scroll)
 
-        if isinstance(menu.item, Choice):
-            _select_selected_choice_sym()
+    # Jump into menu
+    _cur_menu = menu
+    _shown = shown_sub
+    _sel_node_i = _menu_scroll = 0
+
+    if isinstance(menu.item, Choice):
+        _select_selected_choice_sym()
+
+    return True
 
 
 def _select_selected_choice_sym():
@@ -1225,7 +1220,7 @@ def _select_prev_menu_entry():
         _sel_node_i -= 1
 
         # See _select_next_menu_entry()
-        if _sel_node_i <= _menu_scroll + _SCROLL_OFFSET:
+        if _sel_node_i < _menu_scroll + _SCROLL_OFFSET:
             _menu_scroll = max(_menu_scroll - 1, 0)
 
 
@@ -1418,7 +1413,7 @@ def _draw_main():
 
     _path_win.erase()
 
-    # Draw the menu path ("(top menu) -> menu -> submenu -> ...")
+    # Draw the menu path ("(Top) -> Menu -> Submenu -> ...")
 
     menu_prompts = []
 
@@ -1430,7 +1425,7 @@ def _draw_main():
         menu_prompts.append(menu.prompt[0] if menu.prompt else
                             standard_sc_expr_str(menu.item))
         menu = menu.parent
-    menu_prompts.append("(top menu)")
+    menu_prompts.append("(Top)")
     menu_prompts.reverse()
 
     # Hack: We can't put ACS_RARROW directly in the string. Temporarily
@@ -1471,10 +1466,6 @@ def _shown_nodes(menu):
         res = []
 
         while node:
-            # This code is minorly performance-sensitive. Make it too slow
-            # (e.g., by always recursing the entire tree), and going in and out
-            # of menus no longer feels instant.
-
             if _visible(node) or _show_all:
                 res.append(node)
                 if node.list and not node.is_menuconfig:
@@ -1483,14 +1474,11 @@ def _shown_nodes(menu):
                     # menus and choices as well as 'menuconfig' symbols.
                     res += rec(node.list)
 
-            elif node.list and isinstance(node.item, Symbol) and \
-                 expr_value(node.dep):
+            elif node.list and isinstance(node.item, Symbol):
                 # Show invisible symbols if they have visible children. This
                 # can happen for an m/y-valued symbol with an optional prompt
-                # ('prompt "foo" is COND') that is currently disabled. The
-                # expr_value(node.dep) check safely prunes the search: A node
-                # with unsatisfied direct dependencies can never have visible
-                # children.
+                # ('prompt "foo" is COND') that is currently disabled. Note
+                # that it applies to both 'config' and 'menuconfig' symbols.
                 shown_children = rec(node.list)
                 if shown_children:
                     res.append(node)
@@ -1553,36 +1541,32 @@ def _change_node(node):
     # Changes the value of the menu node 'node' if it is a symbol. Bools and
     # tristates are toggled, while other symbol types pop up a text entry
     # dialog.
+    #
+    # Returns False if the value of 'node' can't be changed.
 
-    if not isinstance(node.item, (Symbol, Choice)):
-        return
-
-    # This will hit for invisible symbols, which appear in show-all mode and
-    # when an invisible symbol has visible children (which can happen e.g. for
-    # symbols with optional prompts)
-    if not (node.prompt and expr_value(node.prompt[1])):
-        return
+    if not _changeable(node):
+        return False
 
     # sc = symbol/choice
     sc = node.item
 
-    if sc.type in (INT, HEX, STRING):
+    if sc.orig_type in (INT, HEX, STRING):
         s = sc.str_value
 
         while True:
             s = _input_dialog(
-                "{} ({})".format(node.prompt[0], TYPE_TO_STR[sc.type]),
+                "{} ({})".format(node.prompt[0], TYPE_TO_STR[sc.orig_type]),
                 s, _range_info(sc))
 
             if s is None:
                 break
 
-            if sc.type in (INT, HEX):
+            if sc.orig_type in (INT, HEX):
                 s = s.strip()
 
                 # 'make menuconfig' does this too. Hex values not starting with
                 # '0x' are accepted when loading .config files though.
-                if sc.type == HEX and not s.startswith(("0x", "0X")):
+                if sc.orig_type == HEX and not s.startswith(("0x", "0X")):
                     s = "0x" + s
 
             if _check_valid(sc, s):
@@ -1594,11 +1578,40 @@ def _change_node(node):
         # case: .assignable can be (2,) while .tri_value is 0.
         _set_val(sc, sc.assignable[0])
 
-    elif sc.assignable:
+    else:
         # Set the symbol to the value after the current value in
         # sc.assignable, with wrapping
         val_index = sc.assignable.index(sc.tri_value)
         _set_val(sc, sc.assignable[(val_index + 1) % len(sc.assignable)])
+
+
+    if _is_y_mode_choice_sym(sc) and not node.list:
+        # Immediately jump to the parent menu after making a choice selection,
+        # like 'make menuconfig' does, except if the menu node has children
+        # (which can happen if a symbol 'depends on' a choice symbol that
+        # immediately precedes it).
+        _leave_menu()
+
+
+    return True
+
+
+def _changeable(node):
+    # Returns True if the value if 'node' can be changed
+
+    sc = node.item
+
+    if not isinstance(sc, (Symbol, Choice)):
+        return False
+
+    # This will hit for invisible symbols, which appear in show-all mode and
+    # when an invisible symbol has visible children (which can happen e.g. for
+    # symbols with optional prompts)
+    if not (node.prompt and expr_value(node.prompt[1])):
+        return False
+
+    return sc.orig_type in (STRING, INT, HEX) or len(sc.assignable) > 1 \
+        or _is_y_mode_choice_sym(sc)
 
 
 def _set_sel_node_tri_val(tri_val):
@@ -1702,7 +1715,7 @@ def _input_dialog(title, initial_text, info_text=None):
         curses.doupdate()
 
 
-        c = _get_wch_compat(win)
+        c = _getch_compat(win)
 
         if c == curses.KEY_RESIZE:
             # Resize the main display too. The dialog floats above it.
@@ -1846,29 +1859,33 @@ def _save_dialog(save_fn, default_filename, description):
 
         filename = os.path.expanduser(filename)
 
-        if _try_save(save_fn, filename, description):
-            _msg("Success", "{} saved to {}".format(description, filename))
+        msg = _try_save(save_fn, filename, description)
+        if msg:
+            _msg("Success", msg)
             return filename
 
 
 def _try_save(save_fn, filename, description):
-    # Tries to save a configuration file. Pops up an error and returns False on
-    # failure.
+    # Tries to save a configuration file. Returns a message to print on
+    # success.
     #
     # save_fn:
     #   Function to call with 'filename' to save the file
     #
     # description:
     #   String describing the thing being saved
+    #
+    # Return value:
+    #   A message to print on success, and None on failure
 
     try:
-        save_fn(filename)
-        return True
+        # save_fn() returns a message to print
+        return save_fn(filename)
     except OSError as e:
         _error("Error saving {} to '{}'\n\n{} (errno: {})"
                .format(description, e.filename, e.strerror,
                        errno.errorcode[e.errno]))
-        return False
+        return None
 
 
 def _key_dialog(title, text, keys):
@@ -1902,7 +1919,7 @@ def _key_dialog(title, text, keys):
         curses.doupdate()
 
 
-        c = _get_wch_compat(win)
+        c = _getch_compat(win)
 
         if c == curses.KEY_RESIZE:
             # Resize the main display too. The dialog floats above it.
@@ -2000,30 +2017,29 @@ def _jump_to_dialog():
 
     _safe_curs_set(2)
 
-    # TODO: Code duplication with _select_{next,prev}_menu_entry(). Can this be
-    # factored out in some nice way?
+    # Logic duplication with _select_{next,prev}_menu_entry(), except we do a
+    # functional variant that returns the new (sel_node_i, scroll) values to
+    # avoid 'nonlocal'. TODO: Can this be factored out in some nice way?
 
     def select_next_match():
-        nonlocal sel_node_i
-        nonlocal scroll
+        if sel_node_i == len(matches) - 1:
+            return sel_node_i, scroll
 
-        if sel_node_i < len(matches) - 1:
-            sel_node_i += 1
+        if sel_node_i + 1 >= scroll + _height(matches_win) - _SCROLL_OFFSET \
+           and scroll < _max_scroll(matches, matches_win):
 
-            if sel_node_i >= scroll + _height(matches_win) - _SCROLL_OFFSET \
-               and scroll < _max_scroll(matches, matches_win):
+            return sel_node_i + 1, scroll + 1
 
-                scroll += 1
+        return sel_node_i + 1, scroll
 
     def select_prev_match():
-        nonlocal sel_node_i
-        nonlocal scroll
+        if sel_node_i == 0:
+            return sel_node_i, scroll
 
-        if sel_node_i > 0:
-            sel_node_i -= 1
+        if sel_node_i - 1 < scroll + _SCROLL_OFFSET:
+            return sel_node_i - 1, max(scroll - 1, 0)
 
-            if sel_node_i <= scroll + _SCROLL_OFFSET:
-                scroll = max(scroll - 1, 0)
+        return sel_node_i - 1, scroll
 
     while True:
         if s != prev_s:
@@ -2099,7 +2115,7 @@ def _jump_to_dialog():
         curses.doupdate()
 
 
-        c = _get_wch_compat(edit_box)
+        c = _getch_compat(edit_box)
 
         if c == "\n":
             if matches:
@@ -2130,21 +2146,21 @@ def _jump_to_dialog():
                     sel_node_i, scroll)
 
         elif c == curses.KEY_DOWN:
-            select_next_match()
+            sel_node_i, scroll = select_next_match()
 
         elif c == curses.KEY_UP:
-            select_prev_match()
+            sel_node_i, scroll = select_prev_match()
 
         elif c in (curses.KEY_NPAGE, "\x04"):  # Page Down/Ctrl-D
             # Keep it simple. This way we get sane behavior for small windows,
             # etc., for free.
             for _ in range(_PG_JUMP):
-                select_next_match()
+                sel_node_i, scroll = select_next_match()
 
         # Page Up (no Ctrl-U, as it's already used by the edit box)
         elif c == curses.KEY_PPAGE:
             for _ in range(_PG_JUMP):
-                select_prev_match()
+                sel_node_i, scroll = select_prev_match()
 
         elif c == curses.KEY_END:
             sel_node_i = len(matches) - 1
@@ -2364,7 +2380,7 @@ def _info_dialog(node, from_jump_to_dialog):
         curses.doupdate()
 
 
-        c = _get_wch_compat(text_win)
+        c = _getch_compat(text_win)
 
         if c == curses.KEY_RESIZE:
             _resize_info_dialog(top_line_win, text_win, bot_sep_win, help_win)
@@ -2600,8 +2616,7 @@ def _help_info(sc):
 
     for node in sc.nodes:
         if node.help is not None:
-            s += "Help:\n\n{}\n\n" \
-                 .format(textwrap.indent(node.help, "  "))
+            s += "Help:\n\n{}\n\n".format(_indent(node.help, 2))
 
     return s
 
@@ -2670,7 +2685,7 @@ def _split_expr_info(expr, indent):
 
     s = ""
     for i, term in enumerate(split_expr(expr, split_op)):
-        s += "{}{} {}".format(" "*indent,
+        s += "{}{} {}".format(indent*" ",
                               "  " if i == 0 else op_str,
                               _expr_str(term))
 
@@ -2689,34 +2704,34 @@ def _select_imply_info(sym):
     # 'sym'. The selecting/implying symbols are grouped according to which
     # value they select/imply 'sym' to (n/m/y).
 
-    s = ""
-
-    def add_sis(expr, val, title):
-        nonlocal s
-
+    def sis(expr, val, title):
         # sis = selects/implies
         sis = [si for si in split_expr(expr, OR) if expr_value(si) == val]
-        if sis:
-            s += title
-            for si in sis:
-                s += "  - {}\n".format(split_expr(si, AND)[0].name)
-            s += "\n"
+        if not sis:
+            return ""
+
+        res = title
+        for si in sis:
+            res += "  - {}\n".format(split_expr(si, AND)[0].name)
+        return res + "\n"
+
+    s = ""
 
     if sym.rev_dep is not _kconf.n:
-        add_sis(sym.rev_dep, 2,
-                "Symbols currently y-selecting this symbol:\n")
-        add_sis(sym.rev_dep, 1,
-                "Symbols currently m-selecting this symbol:\n")
-        add_sis(sym.rev_dep, 0,
-                "Symbols currently n-selecting this symbol (no effect):\n")
+        s += sis(sym.rev_dep, 2,
+                 "Symbols currently y-selecting this symbol:\n")
+        s += sis(sym.rev_dep, 1,
+                 "Symbols currently m-selecting this symbol:\n")
+        s += sis(sym.rev_dep, 0,
+                 "Symbols currently n-selecting this symbol (no effect):\n")
 
     if sym.weak_rev_dep is not _kconf.n:
-        add_sis(sym.weak_rev_dep, 2,
-                "Symbols currently y-implying this symbol:\n")
-        add_sis(sym.weak_rev_dep, 1,
-                "Symbols currently m-implying this symbol:\n")
-        add_sis(sym.weak_rev_dep, 0,
-                "Symbols currently n-implying this symbol (no effect):\n")
+        s += sis(sym.weak_rev_dep, 2,
+                 "Symbols currently y-implying this symbol:\n")
+        s += sis(sym.weak_rev_dep, 1,
+                 "Symbols currently m-implying this symbol:\n")
+        s += sis(sym.weak_rev_dep, 0,
+                 "Symbols currently n-implying this symbol (no effect):\n")
 
     return s
 
@@ -2727,7 +2742,7 @@ def _kconfig_def_info(item):
 
     nodes = [item] if isinstance(item, MenuNode) else item.nodes
 
-    s = "Kconfig definition{}, with propagated dependencies\n" \
+    s = "Kconfig definition{}, with parent deps. propagated to 'depends on'\n" \
         .format("s" if len(nodes) > 1 else "")
     s += (len(s) - 1)*"="
 
@@ -2740,7 +2755,7 @@ def _kconfig_def_info(item):
              .format(node.filename, node.linenr,
                      _include_path_info(node),
                      _menu_path_info(node),
-                     textwrap.indent(node.custom_str(_name_and_val_str), "  "))
+                     _indent(node.custom_str(_name_and_val_str), 2))
 
     return s
 
@@ -2769,7 +2784,14 @@ def _menu_path_info(node):
         path = " -> " + (node.prompt[0] if node.prompt else
                          standard_sc_expr_str(node.item)) + path
 
-    return "(top menu)" + path
+    return "(Top)" + path
+
+
+def _indent(s, n):
+    # Returns 's' with each line indented 'n' spaces. textwrap.indent() is not
+    # available in Python 2 (it's 3.3+).
+
+    return "\n".join(n*" " + line for line in s.split("\n"))
 
 
 def _name_and_val_str(sc):
@@ -2952,8 +2974,7 @@ def _node_str(node):
             # Print "(NEW)" next to symbols without a user value (from e.g. a
             # .config), but skip it for choice symbols in choices in y mode,
             # and for symbols of UNKNOWN type (which generate a warning though)
-            if sym.user_value is None and \
-               sym.type != UNKNOWN and \
+            if sym.user_value is None and sym.orig_type and \
                not (sym.choice and sym.choice.tri_value == 2):
 
                 s += " (NEW)"
@@ -3005,10 +3026,10 @@ def _value_str(node):
         return ""
 
     # Wouldn't normally happen, and generates a warning
-    if item.type == UNKNOWN:
+    if not item.orig_type:
         return ""
 
-    if item.type in (STRING, INT, HEX):
+    if item.orig_type in (STRING, INT, HEX):
         return "({})".format(item.str_value)
 
     # BOOL or TRISTATE
@@ -3042,28 +3063,26 @@ def _check_valid(sym, s):
     # Returns True if the string 's' is a well-formed value for 'sym'.
     # Otherwise, displays an error and returns False.
 
-    if sym.type not in (INT, HEX):
+    if sym.orig_type not in (INT, HEX):
         # Anything goes for non-int/hex symbols
         return True
 
-    base = 10 if sym.type == INT else 16
+    base = 10 if sym.orig_type == INT else 16
     try:
         int(s, base)
     except ValueError:
         _error("'{}' is a malformed {} value"
-               .format(s, TYPE_TO_STR[sym.type]))
+               .format(s, TYPE_TO_STR[sym.orig_type]))
         return False
 
     for low_sym, high_sym, cond in sym.ranges:
         if expr_value(cond):
-            low = int(low_sym.str_value, base)
-            val = int(s, base)
-            high = int(high_sym.str_value, base)
+            low_s = low_sym.str_value
+            high_s = high_sym.str_value
 
-            if not low <= val <= high:
+            if not int(low_s, base) <= int(s, base) <= int(high_s, base):
                 _error("{} is outside the range {}-{}"
-                       .format(s, low_sym.str_value, high_sym.str_value))
-
+                       .format(s, low_s, high_s))
                 return False
 
             break
@@ -3075,7 +3094,7 @@ def _range_info(sym):
     # Returns a string with information about the valid range for the symbol
     # 'sym', or None if 'sym' doesn't have a range
 
-    if sym.type in (INT, HEX):
+    if sym.orig_type in (INT, HEX):
         for low, high, cond in sym.ranges:
             if expr_value(cond):
                 return "Range: {}-{}".format(low.str_value, high.str_value)
@@ -3102,7 +3121,17 @@ def _is_num(name):
     return True
 
 
-def _get_wch_compat(win):
+def _getch_compat(win):
+    # Uses get_wch() if available (Python 3.3+) and getch() otherwise. Also
+    # handles a PDCurses resizing quirk.
+
+    if hasattr(win, "get_wch"):
+        c = win.get_wch()
+    else:
+        c = win.getch()
+        if 0 <= c <= 255:
+            c = chr(c)
+
     # Decent resizing behavior on PDCurses requires calling resize_term(0, 0)
     # after receiving KEY_RESIZE, while ncurses (usually) handles terminal
     # resizing automatically in get(_w)ch() (see the end of the
@@ -3111,8 +3140,6 @@ def _get_wch_compat(win):
     # resize_term(0, 0) reliably fails and does nothing on ncurses, so this
     # hack gives ncurses/PDCurses compatibility for resizing. I don't know
     # whether it would cause trouble for other implementations.
-
-    c = win.get_wch()
     if c == curses.KEY_RESIZE:
         try:
             curses.resize_term(0, 0)

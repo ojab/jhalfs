@@ -12,12 +12,12 @@ all: menuconfig
 	@$$(grep RUN_ME configuration 2>/dev/null | sed -e 's@RUN_ME=\"@@' -e 's@\"@@')
 
 menuconfig:
-	@cp -a configuration .configuration.old 2>/dev/null || true
+	@cp -a configuration configuration.old 2>/dev/null || true
 	@CONFIG_="" KCONFIG_CONFIG=configuration $(CONFIG)/menuconfig.py $(CONFIG_CONFIG_IN)
 
 # Clean up
 
 clean:
-	rm -f configuration .configuration.old error
+	rm -f configuration configuration.old error
 
 .PHONY: all menuconfig clean
