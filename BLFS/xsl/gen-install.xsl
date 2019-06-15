@@ -6,6 +6,7 @@
 <!-- $Id$ -->
 
   <xsl:template match="screen" mode="installation">
+    <xsl:param name="want-stats" select="false"/>
 <!-- "nature" variables:
       - 'non-root': executable as user
       - 'config': execute as root, with no special formatting
@@ -35,9 +36,14 @@
     </xsl:variable>
 
     <xsl:variable
+         name="prec-screen"
+         select="preceding::screen[not(@role='nodump') and ./userinput][1]
+                        [ancestor::sect2 = current()/ancestor::sect2]"/>
+
+    <xsl:variable
          name="prec-string"
-         select="string(preceding-sibling::screen[not(@role='nodump') and
-                                                      ./userinput][1])"/>
+         select="string($prec-screen)"/>
+
 <!--
     <xsl:message>
       <xsl:text>
@@ -60,16 +66,14 @@ List of preceding siblings for "</xsl:text>
       <xsl:choose>
         <xsl:when
              test="$prec-string='' or
-                   (preceding-sibling::screen[not(@role='nodump') and
-                                                      ./userinput] |
-                    preceding-sibling::para/command[contains(text(),'check') or
-                                                    contains(text(),'test')]
+                   (preceding::screen[not(@role='nodump') and
+                                                 ./userinput] |
+                    preceding::command[contains(text(),'check') or
+                                       contains(text(),'test')]
                    )[last()][self::command]">
           <xsl:text>none</xsl:text>
         </xsl:when>
-        <xsl:when
-           test="preceding-sibling::screen
-                    [not(@role='nodump') and ./userinput][1][not(@role)]">
+        <xsl:when test="$prec-screen[not(@role)]">
           <xsl:text>non-root</xsl:text>
         </xsl:when>
         <xsl:when test="contains($prec-string,'useradd') or
@@ -90,24 +94,26 @@ List of preceding siblings for "</xsl:text>
     </xsl:variable>
 
     <xsl:variable
+         name="follow-screen"
+         select="following::screen[not(@role='nodump') and ./userinput][1]
+                        [ancestor::sect2 = current()/ancestor::sect2]"/>
+
+    <xsl:variable
          name="follow-string"
-         select="string(following-sibling::screen[not(@role='nodump') and
-                                                      ./userinput][1])"/>
+         select="string($follow-screen)"/>
 
     <xsl:variable name="follow-nature">
       <xsl:choose>
         <xsl:when
              test="$follow-string='' or
-                   (following-sibling::screen[not(@role='nodump') and
-                                                      ./userinput] |
-                    following-sibling::para/command[contains(text(),'check') or
-                                                    contains(text(),'test')]
+                   (following::screen[not(@role='nodump') and
+                                                 ./userinput] |
+                    following::command[contains(text(),'check') or
+                                       contains(text(),'test')]
                    )[1][self::command]">
           <xsl:text>none</xsl:text>
         </xsl:when>
-        <xsl:when
-           test="following-sibling::screen
-                    [not(@role='nodump') and ./userinput][1][not(@role)]">
+        <xsl:when test="$follow-screen[not(@role)]">
           <xsl:text>non-root</xsl:text>
         </xsl:when>
         <xsl:when test="contains($follow-string,'useradd') or
@@ -137,8 +143,6 @@ List of preceding siblings for "</xsl:text>
           <xsl:call-template name="end-root"/>
         </xsl:if>
         <xsl:apply-templates/>
-        <xsl:text>
-</xsl:text>
       </xsl:when>
 
       <xsl:when test="$my-nature='config'">
@@ -149,8 +153,6 @@ List of preceding siblings for "</xsl:text>
           <xsl:call-template name="end-install"/>
         </xsl:if>
         <xsl:apply-templates mode="root"/>
-        <xsl:text>
-</xsl:text>
         <xsl:if test="$follow-nature='none'">
           <xsl:call-template name="end-root"/>
         </xsl:if>
@@ -158,16 +160,14 @@ List of preceding siblings for "</xsl:text>
 
       <xsl:when test="$my-nature='install'">
         <xsl:if test="$prec-nature='none' or $prec-nature='non-root'">
-          <xsl:if test="contains($list-stat-norm,
-                                 concat(' ',ancestor::sect1/@id,' '))">
+          <xsl:if test="$want-stats">
             <xsl:call-template name="output-destdir"/>
           </xsl:if>
           <xsl:call-template name="begin-root"/>
           <xsl:call-template name="begin-install"/>
         </xsl:if>
         <xsl:if test="$prec-nature='config'">
-          <xsl:if test="contains($list-stat-norm,
-                                 concat(' ',ancestor::sect1/@id,' '))">
+          <xsl:if test="$want-stats">
             <xsl:call-template name="end-root"/>
             <xsl:call-template name="output-destdir"/>
             <xsl:call-template name="begin-root"/>
@@ -175,8 +175,6 @@ List of preceding siblings for "</xsl:text>
           <xsl:call-template name="begin-install"/>
         </xsl:if>
         <xsl:apply-templates mode="install"/>
-        <xsl:text>
-</xsl:text>
         <xsl:if test="$follow-nature='none'">
           <xsl:call-template name="end-install"/>
           <xsl:call-template name="end-root"/>
@@ -188,27 +186,27 @@ List of preceding siblings for "</xsl:text>
 
   <xsl:template name="begin-root">
     <xsl:if test="$sudo='y'">
-      <xsl:text>sudo -E sh &lt;&lt; ROOT_EOF
-</xsl:text>
+      <xsl:text>
+sudo -E sh &lt;&lt; ROOT_EOF</xsl:text>
     </xsl:if>
   </xsl:template>
 
   <xsl:template name="begin-install">
     <xsl:if test="$wrap-install = 'y'">
-      <xsl:text>if [ -r "$JH_PACK_INSTALL" ]; then
+      <xsl:text>
+if [ -r "$JH_PACK_INSTALL" ]; then
   source $JH_PACK_INSTALL
   export -f wrapInstall
   export -f packInstall
 fi
-wrapInstall '
-</xsl:text>
+wrapInstall '</xsl:text>
     </xsl:if>
   </xsl:template>
 
   <xsl:template name="end-root">
     <xsl:if test="$sudo='y'">
-      <xsl:text>ROOT_EOF
-</xsl:text>
+      <xsl:text>
+ROOT_EOF</xsl:text>
     </xsl:if>
   </xsl:template>
 
@@ -219,19 +217,36 @@ wrapInstall '
       </xsl:call-template>
     </xsl:if>
     <xsl:if test="$wrap-install = 'y'">
-      <xsl:text>'&#xA;packInstall&#xA;</xsl:text>
+      <xsl:text>'&#xA;packInstall</xsl:text>
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="text()" mode="install">
+  <xsl:template match="userinput" mode="install">
+    <xsl:text>
+</xsl:text>
     <xsl:call-template name="output-install">
-      <xsl:with-param name="out-string" select="."/>
+      <xsl:with-param name="out-string" select="string()"/>
     </xsl:call-template>
   </xsl:template>
 
   <xsl:template name="output-install">
     <xsl:param name="out-string" select="''"/>
     <xsl:choose>
+      <xsl:when test="starts-with($out-string, 'make ') or
+                      contains($out-string,' make ') or
+                      contains($out-string,'&#xA;make')">
+        <xsl:call-template name="output-install">
+          <xsl:with-param
+               name="out-string"
+               select="substring-before($out-string,'make ')"/>
+        </xsl:call-template>
+        <xsl:text>make -j1 </xsl:text>
+        <xsl:call-template name="output-install">
+          <xsl:with-param
+               name="out-string"
+               select="substring-after($out-string,'make ')"/>
+        </xsl:call-template>
+      </xsl:when>
       <xsl:when test="contains($out-string,string($APOS))
                       and $wrap-install = 'y'">
         <xsl:call-template name="output-root">

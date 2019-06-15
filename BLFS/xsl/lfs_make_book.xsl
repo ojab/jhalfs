@@ -15,9 +15,9 @@
                       $package='dbus' or
                       $package='vim' or
                       $package='systemd' or
-                      $package='ninja' or
                       $package='Python' or
                       $package='shadow'"/>
+      <xsl:when test="$package='kernel'">true</xsl:when>
       <xsl:when test="$package='LFS-Release'">true</xsl:when>
       <xsl:otherwise>
         <xsl:for-each select="document($lfsbook)">
@@ -35,10 +35,9 @@
                       $package='dbus' or
                       $package='vim' or
                       $package='systemd' or
-                      $package='ninja' or
                       $package='Python' or
                       $package='shadow'"/>
-      <xsl:when test="$package='linux'">
+      <xsl:when test="$package='kernel'">
         <xsl:for-each select="document($lfsbook)">
           <xsl:apply-templates select="key('idlfs',$package)[ancestor::chapter/@id='chapter-bootable']" mode="lfs"/>
         </xsl:for-each>
