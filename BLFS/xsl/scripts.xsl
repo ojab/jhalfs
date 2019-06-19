@@ -539,6 +539,7 @@ echo "</xsl:text>
 
   <xsl:template match="screen" mode="not-pack">
     <xsl:choose>
+      <xsl:when test="@role='nodump'"/>
       <xsl:when test="ancestor::sect1[@id='postlfs-config-vimrc']">
         <xsl:text>
 cat > ~/.vimrc &lt;&lt;EOF
