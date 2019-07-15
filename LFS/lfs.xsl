@@ -171,11 +171,9 @@
         <xsl:text>set -e&#xA;</xsl:text>
       </xsl:if>
       <xsl:text>&#xA;</xsl:text>
-      <xsl:if test="sect2[@role='installation']">
-        <xsl:call-template name="start-script">
-          <xsl:with-param name="order" select="$order"/>
-        </xsl:call-template>
-      </xsl:if>
+      <xsl:call-template name="start-script">
+        <xsl:with-param name="order" select="$order"/>
+      </xsl:call-template>
       <xsl:apply-templates select="sect2[not(@revision) or
                                          @revision=$revision] |
                                    screen[(not(@role) or
@@ -197,9 +195,7 @@
            mode="pkgmngt"/>
       </xsl:if>
       <xsl:text>echo -e "\n\nTotalseconds: $SECONDS\n"&#xA;</xsl:text>
-      <xsl:if test="sect2[@role='installation']">
-        <xsl:call-template name="end-script"/>
-      </xsl:if>
+      <xsl:call-template name="end-script"/>
       <xsl:text>exit&#xA;</xsl:text>
     </exsl:document>
     </xsl:if>
@@ -1151,60 +1147,68 @@ LOGLEVEL="</xsl:text>
 
   <xsl:template name="start-script">
     <xsl:param name="order" select="'073'"/>
-<!-- get the location of the system root -->
     <xsl:text>
+<!-- save the timer, so that unpacking, and du is not counted -->
+PREV_SEC=${SECONDS}
+      <!-- get the location of the system root -->
 if [ -h /tools ]; then
   ROOT=$(dirname $(readlink /tools))/
 else
   ROOT=/
 fi
-SRC_DIR=${ROOT}sources
-<!-- save the timer, so that unpacking, and du is not counted -->
-PREV_SEC=${SECONDS}
-<!-- Set variables, for use by the Makefile and package manager -->
-VERSION=</xsl:text><!-- needed for Makefile, and may be used in PackInstall-->
-    <xsl:copy-of select=".//sect1info/productnumber/text()"/>
-    <xsl:text>
-PKG_DEST=${SRC_DIR}/</xsl:text>
-    <xsl:copy-of select="$order"/>
-    <xsl:text>-</xsl:text>
-    <xsl:copy-of select=".//sect1info/productname/text()"/>
-    <xsl:text>
-    <!-- Get the tarball name from sect1info -->
-PACKAGE=</xsl:text>
-    <xsl:call-template name="basename">
-      <xsl:with-param name="path" select=".//sect1info/address/text()"/>
-    </xsl:call-template>
-    <xsl:text>
 SCRIPT_ROOT=</xsl:text>
     <xsl:copy-of select="$script-root"/>
     <xsl:text>
 </xsl:text>
-    <xsl:if test = "( ../@id != 'chapter-temporary-tools' or
-                      starts-with(@id,'ch-system') ) and $pkgmngt = 'y'">
+    <xsl:if test="sect2[@role='installation']">
       <xsl:text>
+SRC_DIR=${ROOT}sources
+<!-- Set variables, for use by the Makefile and package manager -->
+VERSION=</xsl:text><!-- needed for Makefile, and may be used in PackInstall-->
+      <xsl:copy-of select=".//sect1info/productnumber/text()"/>
+      <xsl:text>
+PKG_DEST=${SRC_DIR}/</xsl:text>
+      <xsl:copy-of select="$order"/>
+      <xsl:text>-</xsl:text>
+      <xsl:copy-of select=".//sect1info/productname/text()"/>
+      <xsl:text>
+<!-- Get the tarball name from sect1info -->
+PACKAGE=</xsl:text>
+      <xsl:call-template name="basename">
+        <xsl:with-param name="path" select=".//sect1info/address/text()"/>
+      </xsl:call-template>
+      <xsl:if test = "( ../@id != 'chapter-temporary-tools' or
+                      starts-with(@id,'ch-system') ) and $pkgmngt = 'y'">
+        <xsl:text>
 source ${ROOT}${SCRIPT_ROOT}/packInstall.sh
 export -f packInstall</xsl:text>
-      <xsl:if test="$wrap-install='y'">
-        <xsl:text>
+        <xsl:if test="$wrap-install='y'">
+          <xsl:text>
 export -f wrapInstall
 </xsl:text>
+        </xsl:if>
       </xsl:if>
-    </xsl:if>
 <!-- Get the build directory name and clean remnants of previous attempts -->
-    <xsl:text>
+      <xsl:text>
 cd $SRC_DIR
 PKGDIR=$(tar -tf $PACKAGE | head -n1 | sed 's@^./@@;s@/.*@@')
 export PKGDIR VERSION PKG_DEST
 
 if [ -d "$PKGDIR" ]; then rm -rf $PKGDIR; fi
 if [ -d "${PKGDIR%-*}-build" ]; then  rm -rf ${PKGDIR%-*}-build; fi
-
-echo "KB: $(du -skx --exclude=lost+found --exclude=/var/lib --exclude=$SCRIPT_ROOT $ROOT)"
+</xsl:text>
+    </xsl:if>
+    <xsl:text>
+echo "KB: $(du -skx --exclude=lost+found --exclude=var/lib --exclude=$SCRIPT_ROOT $ROOT)"
+</xsl:text>
+    <xsl:if test="sect2[@role='installation']">
+      <xsl:text>
 <!-- At last unpack and change directory -->
 tar -xf $PACKAGE
 cd $PKGDIR
-SECONDS=${PREV_SEC}
+</xsl:text>
+    </xsl:if>
+    <xsl:text>SECONDS=${PREV_SEC}
 
 # Start of LFS book script
 </xsl:text>
@@ -1214,11 +1218,14 @@ SECONDS=${PREV_SEC}
     <xsl:text>
 # End of LFS book script
 
-echo "KB: $(du -skx --exclude=lost+found --exclude=/var/lib --exclude=$SCRIPT_ROOT $ROOT)"
-cd $SRC_DIR
+echo "KB: $(du -skx --exclude=lost+found --exclude=var/lib --exclude=$SCRIPT_ROOT $ROOT)"
+</xsl:text>
+    <xsl:if test="sect2[@role='installation']">
+      <xsl:text>cd $SRC_DIR
 rm -rf $PKGDIR
 if [ -d "${PKGDIR%-*}-build" ]; then  rm -rf ${PKGDIR%-*}-build; fi
 </xsl:text>
+    </xsl:if>
   </xsl:template>
 
 </xsl:stylesheet>
