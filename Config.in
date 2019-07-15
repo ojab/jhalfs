@@ -795,6 +795,8 @@ depends on !BOOK_BLFS
             bool    "Abort the build on the first test failure"
     endchoice
 
+    endmenu # test settings
+
     config    TEST
         int
         default    "0"    if !CONFIG_TESTS
@@ -806,9 +808,7 @@ depends on !BOOK_BLFS
         bool
         default    n if NO_BOMB
         default    y if BOMB
-
-    #--- End Test Suites
-    endmenu # test settings
+   #--- End Test Suites
 
     #--- Package Management
     config  PKGMNGT
