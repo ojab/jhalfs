@@ -89,8 +89,9 @@ done</xsl:variable>
 
 <!-- end parameters and global variables -->
 
-<!-- include the templates for the screen children of role="install" sect2 -->
-  <xsl:include href="gen-install.xsl"/>
+<!-- include the template for processing screen children of
+     role="install" sect2 -->
+  <xsl:include href="process-install.xsl"/>
 
 <!--=================== Begin processing ========================-->
 
@@ -275,13 +276,18 @@ echo Start Time: ${SECONDS} >> $INFOLOG
 </xsl:text>
         </xsl:if>
 
-        <xsl:apply-templates
-             mode="installation"
+        <xsl:call-template name="process-install">
+          <xsl:with-param
+             name="instruction-tree"
              select=".//screen[not(@role = 'nodump') and ./userinput] |
                      .//para/command[contains(text(),'check') or
-                                     contains(text(),'test')]">
+                                     contains(text(),'test')]"/>
           <xsl:with-param name="want-stats" select="$want-stats"/>
-        </xsl:apply-templates>
+          <xsl:with-param name="root-seen" select="boolean(0)"/>
+          <xsl:with-param name="install-seen" select="boolean(0)"/>
+          <xsl:with-param name="test-seen" select="boolean(0)"/>
+          <xsl:with-param name="doc-seen" select="boolean(0)"/>
+        </xsl:call-template>
         <xsl:text>
 </xsl:text>
         <xsl:if test="$sudo = 'y'">

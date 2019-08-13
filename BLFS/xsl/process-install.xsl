@@ -3,10 +3,16 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     version="1.0">
 
-<!-- $Id$ -->
+<!-- $Id: gen-install.xsl 4107 2019-06-15 15:26:23Z pierre $ -->
 
-  <xsl:template match="screen" mode="installation">
-    <xsl:param name="want-stats" select="false"/>
+  <xsl:template name="process-install">
+    <xsl:param name="instruction-tree"/>
+    <xsl:param name="want-stats"/>
+    <xsl:param name="root-seen"/>
+    <xsl:param name="install-seen"/>
+    <xsl:param name="test-seen"/>
+    <xsl:param name="doc-seen"/>
+
 <!-- "nature" variables:
       - 'non-root': executable as user
       - 'config': execute as root, with no special formatting
