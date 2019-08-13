@@ -145,7 +145,8 @@ done</xsl:variable>
 set -e
 unset MAKELEVEL
 </xsl:text>
-<!-- the above is needed for some packages -->
+<!-- Unsetting MAKELEVEL is needed for some packages which assume that
+     their top level Makefile is at level zero -->
       <xsl:choose>
         <!-- Package page -->
         <xsl:when test="sect2[@role='package']">
@@ -583,6 +584,7 @@ EOF
     </xsl:choose>
   </xsl:template>
 
+<!-- Templates for bootscripts/units installation -->
   <xsl:template name="set-bootpkg-dir">
     <xsl:param name="bootpkg" select="'bootscripts'"/>
     <xsl:param name="url" select="''"/>
@@ -740,7 +742,7 @@ echo Time before install: ${SECONDS} >> $INFOLOG
         </xsl:if>
   </xsl:template>
 
-  <xsl:template match="userinput">
+  <xsl:template match="userinput|command">
     <xsl:text>
 </xsl:text>
     <xsl:apply-templates/>
@@ -881,6 +883,8 @@ echo Size after install: $(sudo du -skx --exclude home /) >> $INFOLOG
   </xsl:template>
 
   <xsl:template match="userinput" mode="destdir">
+    <xsl:text>
+</xsl:text>
     <xsl:choose>
       <xsl:when test="./literal">
         <xsl:call-template name="outputpkgdest">

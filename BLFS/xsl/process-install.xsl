@@ -13,181 +13,440 @@
     <xsl:param name="test-seen"/>
     <xsl:param name="doc-seen"/>
 
-<!-- "nature" variables:
-      - 'non-root': executable as user
-      - 'config': execute as root, with no special formatting
-      - 'install': execute as root, with PKG_DEST or escape instructions
-      - 'none': does not exist (for preceding of following uniquely)
--->
-    <xsl:variable name="my-nature">
-      <xsl:choose>
-        <xsl:when test="not(@role)">
-          <xsl:text>non-root</xsl:text>
-        </xsl:when>
-        <xsl:when test="contains(string(),'useradd') or
-                        contains(string(),'groupadd') or
-                        contains(string(),'usermod') or
-                        contains(string(),'icon-cache') or
-                        contains(string(),'desktop-database') or
-                        contains(string(),'compile-schemas') or
-                        contains(string(),'query-loaders') or
-                        contains(string(),'pam.d') or
-                        contains(string(),'query-immodules')">
-          <xsl:text>config</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>install</xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-
-    <xsl:variable
-         name="prec-screen"
-         select="preceding::screen[not(@role='nodump') and ./userinput][1]
-                        [ancestor::sect2 = current()/ancestor::sect2]"/>
-
-    <xsl:variable
-         name="prec-string"
-         select="string($prec-screen)"/>
-
-<!--
-    <xsl:message>
-      <xsl:text>
-==============================
-List of preceding siblings for "</xsl:text>
-      <xsl:value-of select="./userinput"/>
-      <xsl:text>":
-</xsl:text>
-      <xsl:for-each select="preceding-sibling::screen[not(@role='nodump') and
-                                                      ./userinput] |
-                   preceding-sibling::para/command">
-        <xsl:copy-of select=".//text()"/>
-        <xsl:text>
-===
-</xsl:text>
-      </xsl:for-each>
-    </xsl:message>
--->
-    <xsl:variable name="prec-nature">
-      <xsl:choose>
-        <xsl:when
-             test="$prec-string='' or
-                   (preceding::screen[not(@role='nodump') and
-                                                 ./userinput] |
-                    preceding::command[contains(text(),'check') or
-                                       contains(text(),'test')]
-                   )[last()][self::command]">
-          <xsl:text>none</xsl:text>
-        </xsl:when>
-        <xsl:when test="$prec-screen[not(@role)]">
-          <xsl:text>non-root</xsl:text>
-        </xsl:when>
-        <xsl:when test="contains($prec-string,'useradd') or
-                        contains($prec-string,'groupadd') or
-                        contains($prec-string,'usermod') or
-                        contains($prec-string,'icon-cache') or
-                        contains($prec-string,'desktop-database') or
-                        contains($prec-string,'compile-schemas') or
-                        contains($prec-string,'query-loaders') or
-                        contains($prec-string,'pam.d') or
-                        contains($prec-string,'query-immodules')">
-          <xsl:text>config</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>install</xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-
-    <xsl:variable
-         name="follow-screen"
-         select="following::screen[not(@role='nodump') and ./userinput][1]
-                        [ancestor::sect2 = current()/ancestor::sect2]"/>
-
-    <xsl:variable
-         name="follow-string"
-         select="string($follow-screen)"/>
-
-    <xsl:variable name="follow-nature">
-      <xsl:choose>
-        <xsl:when
-             test="$follow-string='' or
-                   (following::screen[not(@role='nodump') and
-                                                 ./userinput] |
-                    following::command[contains(text(),'check') or
-                                       contains(text(),'test')]
-                   )[1][self::command]">
-          <xsl:text>none</xsl:text>
-        </xsl:when>
-        <xsl:when test="$follow-screen[not(@role)]">
-          <xsl:text>non-root</xsl:text>
-        </xsl:when>
-        <xsl:when test="contains($follow-string,'useradd') or
-                        contains($follow-string,'groupadd') or
-                        contains($follow-string,'usermod') or
-                        contains($follow-string,'icon-cache') or
-                        contains($follow-string,'desktop-database') or
-                        contains($follow-string,'compile-schemas') or
-                        contains($follow-string,'query-loaders') or
-                        contains($follow-string,'pam.d') or
-                        contains($follow-string,'query-immodules')">
-          <xsl:text>config</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>install</xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
+<!-- Isolate the current instruction -->
+    <xsl:variable name="current-instr" select="$instruction-tree[1]"/>
 
     <xsl:choose>
-      <xsl:when test="$my-nature='non-root'">
-        <xsl:if test="$prec-nature='install'">
+<!-- First, if we have an empty tree, close everything and exit -->
+      <xsl:when test="not($current-instr)">
+        <xsl:if test="$install-seen">
           <xsl:call-template name="end-install"/>
+        </xsl:if>
+        <xsl:if test="$root-seen">
           <xsl:call-template name="end-root"/>
         </xsl:if>
-        <xsl:if test="$prec-nature='config'">
+        <xsl:if test="$doc-seen and not($root-seen)">
+          <xsl:call-template name="end-doc">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="$test-seen">
+          <xsl:call-template name="end-test">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+      </xsl:when><!-- empty tree -->
+      <xsl:when test="$current-instr[@role='root' and @remap='test']">
+        <xsl:if test="$install-seen">
+          <xsl:call-template name="end-install"/>
+        </xsl:if>
+        <xsl:if test="$root-seen">
           <xsl:call-template name="end-root"/>
         </xsl:if>
-        <xsl:apply-templates/>
-      </xsl:when>
-
-      <xsl:when test="$my-nature='config'">
-        <xsl:if test="$prec-nature='none' or $prec-nature='non-root'">
+        <xsl:if test="$doc-seen and not($root-seen)">
+          <xsl:call-template name="end-doc">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="not($test-seen)">
+          <xsl:call-template name="begin-test">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:call-template name="begin-root"/>
+        <xsl:choose>
+          <xsl:when test="$want-stats">
+            <xsl:apply-templates select="$current-instr" mode="root"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates select="$current-instr"
+                                 mode="root-comment-out"/>
+          </xsl:otherwise>
+        </xsl:choose>
+        <xsl:call-template name="process-install">
+          <xsl:with-param
+             name="instruction-tree"
+             select="$instruction-tree[position()>1]"/>
+          <xsl:with-param name="want-stats" select="$want-stats"/>
+          <xsl:with-param name="root-seen" select="boolean(1)"/>
+          <xsl:with-param name="install-seen" select="boolean(0)"/>
+          <xsl:with-param name="test-seen" select="boolean(1)"/>
+          <xsl:with-param name="doc-seen" select="boolean(0)"/>
+        </xsl:call-template>
+      </xsl:when><!-- role="root" and remap="test" -->
+      <xsl:when test="$current-instr[@role='root' and @remap='doc']">
+        <xsl:if test="$test-seen">
+          <xsl:call-template name="end-test">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="$doc-seen and not($root-seen)">
+          <xsl:call-template name="end-doc">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="not($root-seen)">
           <xsl:call-template name="begin-root"/>
         </xsl:if>
-        <xsl:if test="$prec-nature='install'">
-          <xsl:call-template name="end-install"/>
-        </xsl:if>
-        <xsl:apply-templates mode="root"/>
-        <xsl:if test="$follow-nature='none'">
-          <xsl:call-template name="end-root"/>
-        </xsl:if>
-      </xsl:when>
-
-      <xsl:when test="$my-nature='install'">
-        <xsl:if test="$prec-nature='none' or $prec-nature='non-root'">
-          <xsl:if test="$want-stats">
-            <xsl:call-template name="output-destdir"/>
-          </xsl:if>
-          <xsl:call-template name="begin-root"/>
+        <xsl:if test="not($install-seen)">
           <xsl:call-template name="begin-install"/>
         </xsl:if>
-        <xsl:if test="$prec-nature='config'">
-          <xsl:if test="$want-stats">
-            <xsl:call-template name="end-root"/>
-            <xsl:call-template name="output-destdir"/>
-            <xsl:call-template name="begin-root"/>
-          </xsl:if>
-          <xsl:call-template name="begin-install"/>
-        </xsl:if>
-        <xsl:apply-templates mode="install"/>
-        <xsl:if test="$follow-nature='none'">
+        <xsl:apply-templates select="$current-instr"
+                             mode="install-comment-out"/>
+<!-- The above template ends with a commented line, so that if end-install
+     adds a closing single quote, it will not be seen. Add a CR to prevent
+     that -->
+        <xsl:text>
+</xsl:text>
+        <xsl:call-template name="process-install">
+          <xsl:with-param
+             name="instruction-tree"
+             select="$instruction-tree[position()>1]"/>
+          <xsl:with-param name="want-stats" select="$want-stats"/>
+          <xsl:with-param name="root-seen" select="boolean(1)"/>
+          <xsl:with-param name="install-seen" select="boolean(1)"/>
+          <xsl:with-param name="test-seen" select="boolean(0)"/>
+          <xsl:with-param name="doc-seen" select="boolean(1)"/>
+        </xsl:call-template>
+      </xsl:when><!--role="root" and remap="doc" -->
+      <xsl:when test="$current-instr[@role='root']">
+        <xsl:choose>
+          <xsl:when test="contains(string($current-instr),'useradd') or
+                          contains(string($current-instr),'groupadd') or
+                          contains(string($current-instr),'usermod') or
+                          contains(string($current-instr),'icon-cache') or
+                          contains(string($current-instr),'desktop-database') or
+                          contains(string($current-instr),'compile-schemas') or
+                          contains(string($current-instr),'query-loaders') or
+                          contains(string($current-instr),'pam.d') or
+                          contains(string($current-instr),'query-immodules')">
+            <xsl:if test="$install-seen">
+              <xsl:call-template name="end-install"/>
+            </xsl:if>
+            <xsl:if test="$test-seen">
+              <xsl:call-template name="end-test">
+                <xsl:with-param name="want-stats" select="$want-stats"/>
+              </xsl:call-template>
+            </xsl:if>
+            <xsl:if test="$doc-seen and not($root-seen)">
+              <xsl:call-template name="end-doc">
+                <xsl:with-param name="want-stats" select="$want-stats"/>
+              </xsl:call-template>
+            </xsl:if>
+            <xsl:if test="not($root-seen)">
+              <xsl:call-template name="begin-root"/>
+            </xsl:if>
+            <xsl:apply-templates select="$current-instr" mode="root"/>
+            <xsl:call-template name="process-install">
+              <xsl:with-param
+                 name="instruction-tree"
+                 select="$instruction-tree[position()>1]"/>
+              <xsl:with-param name="want-stats" select="$want-stats"/>
+              <xsl:with-param name="root-seen" select="boolean(1)"/>
+              <xsl:with-param name="install-seen" select="boolean(0)"/>
+              <xsl:with-param name="test-seen" select="boolean(0)"/>
+              <xsl:with-param name="doc-seen" select="boolean(0)"/>
+            </xsl:call-template>
+          </xsl:when><!-- end config as root -->
+          <xsl:otherwise><!-- we have a true install instruction -->
+            <xsl:if test="$test-seen">
+              <xsl:call-template name="end-test">
+                <xsl:with-param name="want-stats" select="$want-stats"/>
+              </xsl:call-template>
+            </xsl:if>
+            <xsl:if test="$doc-seen and not($root-seen)">
+              <xsl:call-template name="end-doc">
+                <xsl:with-param name="want-stats" select="$want-stats"/>
+              </xsl:call-template>
+            </xsl:if>
+            <xsl:if test="$want-stats and not($install-seen)">
+              <xsl:if test="$root-seen">
+                <xsl:call-template name="end-root"/>
+              </xsl:if>
+              <xsl:text>
+echo Time before install: ${SECONDS} >> $INFOLOG</xsl:text>
+              <xsl:apply-templates
+                         select="$instruction-tree[@role='root']/userinput"
+                         mode="destdir"/>
+              <xsl:text>
+
+echo Time after install: ${SECONDS} >> $INFOLOG
+echo Size after install: $(sudo du -skx --exclude home /) >> $INFOLOG
+</xsl:text>
+              <xsl:if test="$root-seen">
+                <xsl:call-template name="begin-root"/>
+              </xsl:if>
+            </xsl:if>
+            <xsl:if test="not($root-seen)">
+              <xsl:call-template name="begin-root"/>
+            </xsl:if>
+            <xsl:if test="not($install-seen)">
+              <xsl:call-template name="begin-install"/>
+            </xsl:if>
+            <xsl:apply-templates select="$current-instr" mode="install"/>
+            <xsl:call-template name="process-install">
+              <xsl:with-param
+                 name="instruction-tree"
+                 select="$instruction-tree[position()>1]"/>
+              <xsl:with-param name="want-stats" select="$want-stats"/>
+              <xsl:with-param name="root-seen" select="boolean(1)"/>
+              <xsl:with-param name="install-seen" select="boolean(1)"/>
+              <xsl:with-param name="test-seen" select="boolean(0)"/>
+              <xsl:with-param name="doc-seen" select="boolean(0)"/>
+            </xsl:call-template>
+          </xsl:otherwise><!-- end true install instruction -->
+        </xsl:choose>
+      </xsl:when><!-- role="root" and no remap -->
+      <xsl:when test="$current-instr[@remap='test'] or
+                      $current-instr/self::command">
+        <xsl:if test="$install-seen">
           <xsl:call-template name="end-install"/>
+        </xsl:if>
+        <xsl:if test="$root-seen">
           <xsl:call-template name="end-root"/>
         </xsl:if>
-      </xsl:when>
-
+        <xsl:if test="$doc-seen and not($root-seen)">
+          <xsl:call-template name="end-doc">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="not($test-seen)">
+          <xsl:if test="not($doc-seen)">
+            <xsl:call-template name="end-make">
+              <xsl:with-param name="want-stats" select="$want-stats"/>
+            </xsl:call-template>
+          </xsl:if>
+          <xsl:call-template name="begin-test">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:choose>
+          <xsl:when test="$want-stats">
+            <xsl:apply-templates select="$current-instr"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates select="$current-instr" mode="comment-out"/>
+          </xsl:otherwise>
+        </xsl:choose>
+        <xsl:call-template name="process-install">
+          <xsl:with-param
+             name="instruction-tree"
+             select="$instruction-tree[position()>1]"/>
+          <xsl:with-param name="want-stats" select="$want-stats"/>
+          <xsl:with-param name="root-seen" select="boolean(0)"/>
+          <xsl:with-param name="install-seen" select="boolean(0)"/>
+          <xsl:with-param name="test-seen" select="boolean(1)"/>
+          <xsl:with-param name="doc-seen" select="boolean(0)"/>
+        </xsl:call-template>
+      </xsl:when><!-- no role, remap=test -->
+      <xsl:when test="$current-instr[@remap='doc']">
+        <xsl:if test="$install-seen">
+          <xsl:call-template name="end-install"/>
+        </xsl:if>
+        <xsl:if test="$root-seen">
+          <xsl:call-template name="end-root"/>
+        </xsl:if>
+        <xsl:if test="$test-seen">
+          <xsl:call-template name="end-test">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="not($doc-seen) or $root-seen">
+          <xsl:if test="not($test-seen) and not($root-seen)">
+            <xsl:call-template name="end-make">
+              <xsl:with-param name="want-stats" select="$want-stats"/>
+            </xsl:call-template>
+          </xsl:if>
+          <xsl:call-template name="begin-doc">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:choose>
+          <xsl:when test="$want-stats">
+            <xsl:apply-templates select="$current-instr"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates select="$current-instr" mode="comment-out"/>
+          </xsl:otherwise>
+        </xsl:choose>
+        <xsl:call-template name="process-install">
+          <xsl:with-param
+             name="instruction-tree"
+             select="$instruction-tree[position()>1]"/>
+          <xsl:with-param name="want-stats" select="$want-stats"/>
+          <xsl:with-param name="root-seen" select="boolean(0)"/>
+          <xsl:with-param name="install-seen" select="boolean(0)"/>
+          <xsl:with-param name="test-seen" select="boolean(0)"/>
+          <xsl:with-param name="doc-seen" select="boolean(1)"/>
+        </xsl:call-template>
+      </xsl:when><!-- no role, remap="doc" -->
+      <xsl:otherwise><!-- no role no remap -->
+        <xsl:if test="$install-seen">
+          <xsl:call-template name="end-install"/>
+        </xsl:if>
+        <xsl:if test="$root-seen">
+          <xsl:call-template name="end-root"/>
+        </xsl:if>
+        <xsl:if test="$doc-seen and not($root-seen)">
+          <xsl:call-template name="end-doc">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="$test-seen">
+          <xsl:call-template name="end-test">
+            <xsl:with-param name="want-stats" select="$want-stats"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:apply-templates select="$current-instr"/>
+        <xsl:call-template name="process-install">
+          <xsl:with-param
+             name="instruction-tree"
+             select="$instruction-tree[position()>1]"/>
+          <xsl:with-param name="want-stats" select="$want-stats"/>
+          <xsl:with-param name="root-seen" select="boolean(0)"/>
+          <xsl:with-param name="install-seen" select="boolean(0)"/>
+          <xsl:with-param name="test-seen" select="boolean(0)"/>
+          <xsl:with-param name="doc-seen" select="boolean(0)"/>
+        </xsl:call-template>
+      </xsl:otherwise><!-- no role, no remap -->
     </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="userinput" mode="install-comment-out">
+    <xsl:text>
+</xsl:text>
+    <xsl:call-template name="output-comment-out">
+      <xsl:with-param name="out-string" select="string()"/>
+      <xsl:with-param name="process" select="'install'"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="userinput|command" mode="root-comment-out">
+    <xsl:text>
+</xsl:text>
+    <xsl:call-template name="output-comment-out">
+      <xsl:with-param name="out-string" select="string()"/>
+      <xsl:with-param name="process" select="'root'"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="userinput|command" mode="comment-out">
+    <xsl:text>
+</xsl:text>
+    <xsl:call-template name="output-comment-out">
+      <xsl:with-param name="out-string" select="string()"/>
+      <xsl:with-param name="process" select="'none'"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="userinput" mode="install">
+    <xsl:text>
+</xsl:text>
+    <xsl:call-template name="output-install">
+      <xsl:with-param name="out-string" select="string()"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="output-comment-out">
+<!-- Output instructions with each line commented out. The "process"
+     parameter is:
+        none: only output commented-out and remove ampersand
+        root: output commented out and remove ampersand,
+              with escaping of \, $, and `
+        install: same + escape ' -->
+    <xsl:param name="out-string"/>
+    <xsl:param name="process"/>
+    <xsl:choose>
+      <xsl:when test="contains($out-string,'&#xA;')">
+        <xsl:choose>
+          <xsl:when test="$process='install'">
+            <xsl:call-template name="output-install">
+              <xsl:with-param
+                        name="out-string"
+                        select="concat('# ',
+                                        substring-before($out-string,'&#xA;')
+                                      )"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:when test="$process='root'">
+            <xsl:call-template name="output-root">
+              <xsl:with-param
+                        name="out-string"
+                        select="concat('# ',
+                                        substring-before($out-string,'&#xA;')
+                                      )"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:call-template name="remove-ampersand">
+              <xsl:with-param
+                        name="out-string"
+                        select="concat('# ',
+                                        substring-before($out-string,'&#xA;')
+                                      )"/>
+            </xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
+        <xsl:text>
+</xsl:text>
+        <xsl:call-template name="output-comment-out">
+          <xsl:with-param
+                    name="out-string"
+                    select="substring-after($out-string,'&#xA;')"/>
+          <xsl:with-param name="process" select="$process"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:choose>
+          <xsl:when test="$process='install'">
+            <xsl:call-template name="output-install">
+              <xsl:with-param name="out-string"
+                              select="concat('# ',$out-string)"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:when test="$process='root'">
+            <xsl:call-template name="output-root">
+              <xsl:with-param name="out-string"
+                              select="concat('# ',$out-string)"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:call-template name="remove-ampersand">
+              <xsl:with-param name="out-string"
+                              select="concat('# ',$out-string)"/>
+            </xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="end-make">
+    <xsl:param name="want-stats"/>
+    <xsl:if test="$want-stats">
+      <xsl:text>
+
+echo Time after make: ${SECONDS} >> $INFOLOG
+echo Size after make: $(sudo du -skx --exclude home /) >> $INFOLOG</xsl:text>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template name="begin-doc">
+    <xsl:param name="want-stats"/>
+    <xsl:if test="$want-stats">
+      <xsl:text>
+echo Time before doc: ${SECONDS} >> $INFOLOG
+</xsl:text>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template name="begin-test">
+    <xsl:param name="want-stats"/>
+    <xsl:if test="$want-stats">
+      <xsl:text>
+echo Time before test: ${SECONDS} >> $INFOLOG
+</xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="begin-root">
@@ -209,6 +468,26 @@ wrapInstall '</xsl:text>
     </xsl:if>
   </xsl:template>
 
+  <xsl:template name="end-doc">
+    <xsl:param name="want-stats"/>
+    <xsl:if test="$want-stats">
+      <xsl:text>
+
+echo Time after doc: ${SECONDS} >> $INFOLOG
+echo Size after doc: $(sudo du -skx --exclude home /) >> $INFOLOG</xsl:text>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template name="end-test">
+    <xsl:param name="want-stats"/>
+    <xsl:if test="$want-stats">
+      <xsl:text>
+
+echo Time after test: ${SECONDS} >> $INFOLOG
+echo Size after test: $(sudo du -skx --exclude home /) >> $INFOLOG</xsl:text>
+    </xsl:if>
+  </xsl:template>
+
   <xsl:template name="end-root">
     <xsl:if test="$sudo='y'">
       <xsl:text>
@@ -225,14 +504,6 @@ ROOT_EOF</xsl:text>
     <xsl:if test="$wrap-install = 'y'">
       <xsl:text>'&#xA;packInstall</xsl:text>
     </xsl:if>
-  </xsl:template>
-
-  <xsl:template match="userinput" mode="install">
-    <xsl:text>
-</xsl:text>
-    <xsl:call-template name="output-install">
-      <xsl:with-param name="out-string" select="string()"/>
-    </xsl:call-template>
   </xsl:template>
 
   <xsl:template name="output-install">
