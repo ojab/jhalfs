@@ -3,7 +3,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     version="1.0">
 
-<!-- $Id: gen-install.xsl 4107 2019-06-15 15:26:23Z pierre $ -->
+<!-- $Id$ -->
 
   <xsl:template name="process-install">
     <xsl:param name="instruction-tree"/>
