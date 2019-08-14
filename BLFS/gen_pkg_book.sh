@@ -216,6 +216,7 @@ xsltproc --xinclude --nonet \
          --stringparam del-la-files "$DEL_LA_FILES" \
          --stringparam list-stat "$LIST_STAT" \
          --stringparam language "$LANGUAGE" \
+	 --stringparam fqdn "$(hostname -f)" \
          -o ./scripts/ ${MakeScripts} \
          ${BookXml}
 # Make the scripts executable.
