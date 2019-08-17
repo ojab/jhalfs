@@ -189,7 +189,8 @@ cd $SRC_DIR</xsl:text>
         <xsl:apply-templates select=".//screen[./userinput]"/>
       </xsl:when>
 
-      <xsl:when test="@role = 'installation'">
+      <xsl:when test="@role = 'installation' and
+                      not(preceding-sibling::sect2[@role = 'installation'])">
         <xsl:text>
 cd $BUILD_DIR
 find . -maxdepth 1 -mindepth 1 -type d | xargs </xsl:text>

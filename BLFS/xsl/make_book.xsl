@@ -102,12 +102,15 @@
               </xsl:call-template>
             </xsl:when>
             <xsl:when test="contains(concat($list,' '),'-pass1 ')">
-<!-- Let's do it only for sect1, hopefully -->
+<!-- We need to do it only for sect1 and sect2, because of libva -->
               <xsl:variable
                    name="real-id"
                    select="substring-before(concat($list,' '),'-pass1 ')"/>
               <xsl:if test="id($real-id)[self::sect1]">
                 <xsl:apply-templates select="id($real-id)" mode="pass1"/>
+              </xsl:if>
+              <xsl:if test="id($real-id)[self::sect2]">
+                <xsl:apply-templates select="id($real-id)" mode="pass1-sect2"/>
               </xsl:if>
             </xsl:when>
             <xsl:when test="not(id($list)[self::sect1 or self::sect2 or self::para or self::bridgehead])">
@@ -184,6 +187,90 @@
             </xsl:attribute>
           </xsl:for-each>
           <xsl:apply-templates mode="pass1"/>
+        </xsl:element>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:copy-of select="."/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="*" mode="pass1-sect2">
+    <xsl:choose>
+      <xsl:when test="self::sect2">
+        <xsl:element name="sect1">
+          <xsl:attribute name="id"><xsl:value-of select="@id"/>-pass1</xsl:attribute>
+          <xsl:attribute name="xreflabel"><xsl:value-of select="@xreflabel"/></xsl:attribute>
+          <xsl:processing-instruction name="dbhtml">filename="<xsl:value-of
+                          select="@id"/>-pass1.html"</xsl:processing-instruction>
+          <xsl:apply-templates mode="pass1-sect2"/>
+        </xsl:element>
+      </xsl:when>
+      <xsl:when test="self::sect3">
+        <xsl:element name="sect2">
+          <xsl:attribute name="role">
+            <xsl:value-of select="@role"/>
+          </xsl:attribute>
+          <xsl:apply-templates mode="pass1-sect2"/>
+        </xsl:element>
+      </xsl:when>
+      <xsl:when test="self::bridgehead">
+        <xsl:element name="bridgehead">
+          <xsl:attribute name="renderas">
+            <xsl:if test="@renderas='sect4'">sect3</xsl:if>
+            <xsl:if test="@renderas='sect5'">sect4</xsl:if>
+          </xsl:attribute>
+          <xsl:value-of select='.'/>
+        </xsl:element>
+      </xsl:when>
+      <xsl:when test="self::xref">
+        <xsl:choose>
+          <xsl:when test="contains(concat(' ',normalize-space($list),' '),
+                                   concat(' ',@linkend,' '))">
+            <xsl:choose>
+              <xsl:when test="@linkend='x-window-system' or @linkend='xorg7'">
+                <xref linkend="xorg7-server"/>
+              </xsl:when>
+              <xsl:when test="@linkend='server-mail'">
+                <xref linkend="{$MTA}"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:copy-of select="."/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:choose>
+              <xsl:when test="@linkend='bootscripts' or
+                              @linkend='systemd-units'">
+                <xsl:copy-of select="."/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="@linkend"/> (in full book)
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:when test="@id">
+        <xsl:element name="{name()}">
+          <xsl:for-each select="attribute::*">
+            <xsl:attribute name="{name()}">
+              <xsl:value-of select="."/>
+              <xsl:if test="name() = 'id'">-pass1</xsl:if>
+            </xsl:attribute>
+          </xsl:for-each>
+          <xsl:apply-templates mode="pass1-sect2"/>
+        </xsl:element>
+      </xsl:when>
+      <xsl:when test=".//xref | .//@id">
+        <xsl:element name="{name()}">
+          <xsl:for-each select="attribute::*">
+            <xsl:attribute name="{name()}">
+              <xsl:value-of select="."/>
+            </xsl:attribute>
+          </xsl:for-each>
+          <xsl:apply-templates mode="pass1-sect2"/>
         </xsl:element>
       </xsl:when>
       <xsl:otherwise>

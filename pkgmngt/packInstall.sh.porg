@@ -116,7 +116,7 @@ PACKAGE=${PACKAGE,,}
 # name is not normalized, several hacks are necessary (now in function
 # extract_version)...
 VERSION=$(extract_version $PCKGVRS)
-porg -lp ${PACKAGE}-${VERSION} sh << PORG_EOF
+porg -+ -lp ${PACKAGE}-${VERSION} sh << PORG_EOF
 $*
 PORG_EOF
 }
