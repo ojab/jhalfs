@@ -62,6 +62,13 @@ config  LANGUAGE
             Because of the book layout, the 3 fields, ll, CC and charmap are
             mandatory. The @modfier is honoured if present.
 
+config  KBLAYOUT
+        string "Keyboard layout (to be used in GDM)"
+        default "us"
+        help
+            Used in GDM for setting the login screen keyboard layout.
+            See the GDM page in the book for what to put into this field
+
 config  SUDO
         bool "Build as User"
         default y

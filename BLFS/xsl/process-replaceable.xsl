@@ -54,6 +54,10 @@
 <!-- end of host/domain name variables -->
 
 <!--===================================================================-->
+<!-- keyboard layout for the gdm page (as of BLFS 9.0) -->
+  <xsl:param name="xkblayout" select="'us'"/>
+
+<!--===================================================================-->
 <!-- the main template: to be adjusted depending on the book -->
   <xsl:template match="replaceable">
     <xsl:choose>
@@ -84,6 +88,10 @@
       </xsl:when>
       <xsl:when test="contains(string(),'@modifier')">
         <xsl:copy-of select="$lang-modifier"/>
+      </xsl:when>
+<!-- keyboard layout for X/waylang (only GDM as of BLFS-9.0) -->
+      <xsl:when test="contains(string(),'layout')">
+        <xsl:copy-of select="$xkblayout"/>
       </xsl:when>
 <!-- At several places, the number of jobs is given as "N" in a replaceable
      tag. We either detect "N" alone or &lt;N&gt; Replace N with 4. -->
