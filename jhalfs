@@ -326,8 +326,8 @@ if [[ "${BLFS_TOOL}" = "y" ]] ; then
                      exit 2 ;;
        branch-6.* )  BLFS_TREE=branches/${BLFS_BRANCH_ID#branch-}/BOOK ;;
          branch-* )  BLFS_TREE=branches/${BLFS_BRANCH_ID#branch-} ;;
-  6.2* | 7.* | 8.*)  BLFS_TREE=tags/${BLFS_BRANCH_ID} ;;
-                * )  BLFS_TREE=tags/${BLFS_BRANCH_ID}/BOOK ;;
+    [isv]* | 6.3* )  BLFS_TREE=tags/${BLFS_BRANCH_ID}/BOOK ;;
+                * )  BLFS_TREE=tags/${BLFS_BRANCH_ID} ;;
     esac
   fi
   load_file "${COMMON_DIR}/libs/func_install_blfs"
