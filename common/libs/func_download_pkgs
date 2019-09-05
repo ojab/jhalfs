@@ -39,16 +39,6 @@ get_sources() {              # Download file, write name to MISSING_FILES.DMP if
   for line in `cat urls.lst`; do
     IFS=$saveIFS  # Restore the system defaults
 
-      # Skip some packages if they aren't needed
-    case $line in
-      */tree* | */gcc-testsuite* ) #unneeded now?
-            [[ "$TEST" = "0" ]] && continue
-          ;;
-      */vim-*-lang* )
-            [[ "$VIMLANG" = "0" ]] && continue
-          ;;
-    esac
-
       # Locations
     URL1=`echo $line | cut -d" " -f2` # Preferred URL
     URL2=`echo $line | cut -d" " -f1` # Fallback Upstream URL

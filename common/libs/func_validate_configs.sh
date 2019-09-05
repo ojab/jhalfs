@@ -41,11 +41,11 @@ inline_doc
   local -r CLFS3_book="$BOOK_common                  $BOOK_clfsX PLATFORM MIPS_LEVEL"
 
   # Build Settings by book
-  local -r   LFS_build="$BUILD_chroot VIMLANG DEL_LA_FILES $BUILD_common PKGMNGT FULL_LOCALE WRAP_INSTALL"
-  local -r  HLFS_build="$BUILD_chroot         $BUILD_common"
-  local -r  CLFS_build="$BUILD_chroot VIMLANG $BUILD_common"
-  local -r CLFS2_build="STRIP         VIMLANG $BUILD_common"
-  local -r CLFS3_build="                      $BUILD_common"
+  local -r   LFS_build="$BUILD_chroot NCURSES5 DEL_LA_FILES $BUILD_common PKGMNGT FULL_LOCALE WRAP_INSTALL"
+  local -r  HLFS_build="$BUILD_chroot $BUILD_common"
+  local -r  CLFS_build="$BUILD_chroot $BUILD_common"
+  local -r CLFS2_build="STRIP         $BUILD_common"
+  local -r CLFS3_build="              $BUILD_common"
 
   # System Settings by book (only LFS for now)
   local -r LFS_system="HOSTNAME INTERFACE IP_ADDR GATEWAY PREFIX BROADCAST DOMAIN DNS1 DNS2 FONT KEYMAP LOCAL LOG_LEVEL"

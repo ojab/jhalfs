@@ -927,14 +927,12 @@ menu "System configuration"
             #   and renamed 'kernel-config'
     #--- End Kernel
 
-    config    VIMLANG
-        bool "Install vim-lang package"
+    config    NCURSES5
+        bool "Install non-wide-character ncurses"
         default n
-        depends on !BOOK_HLFS && !BOOK_CLFS3
+        depends on BOOK_LFS || BOOK_LFS_SYSD
         help
-            #-- Install the optional vim-lang package
-            #   NOTE: This option is obsolete with the 7.3 release of Vim
-            #   which is included in all recent releases of LFS.
+            #-- Install the optional non wide character ncurses5 library
 
     config    TIMEZONE
         string "TimeZone"

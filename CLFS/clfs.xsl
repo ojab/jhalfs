@@ -31,9 +31,6 @@
   -->
   <xsl:param name="bomb-testsuite" select="n"/>
 
-  <!-- Install vim-lang package? OBSOLETE should always be 'n'-->
-  <xsl:param name="vim-lang" select="n"/>
-
   <!-- Time zone -->
   <xsl:param name="timezone" select="GMT"/>
 
@@ -113,9 +110,6 @@
             <xsl:if test="sect2[@role='installation'] and
                           not(@id='ch-system-multiarch-wrapper')">
               <xsl:text>cd $PKGDIR&#xA;</xsl:text>
-              <xsl:if test="@id='ch-system-vim' and $vim-lang = 'y'">
-                <xsl:text>tar -xvf ../vim-&vim-version;-lang.* --strip-components=1&#xA;</xsl:text>
-              </xsl:if>
             </xsl:if>
             <xsl:apply-templates select=".//para/userinput | .//screen"/>
             <xsl:if test="not(@id='ch-chroot-chroot')">

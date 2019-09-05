@@ -13,9 +13,6 @@
 
 <!-- XSLT stylesheet to create shell scripts from CLFS2 books. -->
 
-  <!-- Install vim-lang package? -->
-  <xsl:param name="vim-lang" select="y"/>
-
   <!-- Time zone -->
   <xsl:param name="timezone" select="GMT"/>
 
@@ -74,9 +71,6 @@
             <xsl:if test="sect2[@role='installation'] and
                           not(@id='ch-cross-tools-sysroot-wrapper')">
               <xsl:text>cd $PKGDIR&#xA;</xsl:text>
-              <xsl:if test="@id='ch-system-vim' and $vim-lang = 'y'">
-                <xsl:text>tar -xvf ../vim-&vim-version;-lang.* --strip-components=1&#xA;</xsl:text>
-              </xsl:if>
             </xsl:if>
             <xsl:apply-templates select=".//para/userinput | .//screen"/>
             <xsl:text>exit</xsl:text>

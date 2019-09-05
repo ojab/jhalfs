@@ -40,7 +40,7 @@ Build Settings --->
    [*] Build the kernel
          Kernel config file ($HOME/config-4.15-lfs-1)
    [ ] Strip Installed Binaries/Libraries
-   [ ] Install vim-lang package
+   [ ] Install non-wide-character ncurses
    [ ] DO NOT use/display progress_bar
        TimeZone (Europe/Paris)
        Language (fr_FR.UTF-8)
@@ -99,7 +99,7 @@ Build Settings --->
    [*] Build the kernel
          Kernel config file ($HOME/config-4.15-lfs-systemd
    [ ] Strip Installed Binaries/Libraries
-   [ ] Install vim-lang package
+   [ ] Install non-wide-character ncurses
    [ ] DO NOT use/display progress_bar
        TimeZone (America/Los_Angeles)
        Language (en_US.UTF-8)
@@ -163,7 +163,7 @@ Build Settings --->
    [*] Build the kernel
          Kernel config file ($HOME/config-4.15-clfs-systemd
    [ ] Strip Installed Binaries/Libraries
-   [ ] Install vim-lang package
+   [ ] Install non-wide-character ncurses
    [ ] DO NOT use/display progress_bar
        TimeZone (Australia/Sydney)
        Language (en_AU.UTF-8)

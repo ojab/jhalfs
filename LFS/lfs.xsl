@@ -41,8 +41,8 @@
   -->
   <xsl:param name="bomb-testsuite" select="'n'"/>
 
-  <!-- Install vim-lang package? OBSOLETE should always be 'n'-->
-  <xsl:param name="vim-lang" select="'n'"/>
+  <!-- Install non wide character ncurses 5? -->
+  <xsl:param name="ncurses5" select="'n'"/>
 
   <!-- Should we strip excutables and libraries? -->
   <xsl:param name='strip' select="'n'"/>
@@ -357,6 +357,9 @@ fi
                        @remap='test' and current()/../@id='ch-tools-dejagnu' or
                        @remap='test' and current()/../@id='ch-system-systemd'
                                    ]"/>
+    <xsl:if test="../@id='ch-system-ncurses' and $ncurses5='y'">
+      <xsl:apply-templates select=".//screen[@role='nodump']"/>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="sect1" mode="pkgmngt">
