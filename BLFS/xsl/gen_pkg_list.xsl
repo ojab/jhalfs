@@ -150,7 +150,9 @@
                                                '123456789',
                                                '000000000'),
                                       '-0')
-                            ]) &gt; 0">
+                            ]) &gt; 0 or @id='postlfs-config'">
+<!-- With the removal of lsb-release, there are no more versioned package
+     in the After LFS configuration issue chapter, so test explicitly -->
       <xsl:text>    </xsl:text>
       <sublist>
         <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
