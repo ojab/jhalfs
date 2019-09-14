@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE stylesheet [
+<!ENTITY detect-config "contains(string($current-instr),'useradd') or
+                        contains(string($current-instr),'groupadd') or
+                        contains(string($current-instr),'usermod') or
+                        contains(string($current-instr),'icon-cache') or
+                        contains(string($current-instr),'desktop-database') or
+                        contains(string($current-instr),'compile-schemas') or
+                        contains(string($current-instr),'query-loaders') or
+                        contains(string($current-instr),'pam.d') or
+                        contains(string($current-instr),'/opt/rustc') or
+                        contains(string($current-instr),'query-immodules')">
+]>
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     version="1.0">
@@ -122,19 +134,11 @@
 <!--============================================================-->
       <xsl:when test="$current-instr[@role='root']">
 <!-- We have two cases, depending on the content: either a config instruction,
-     that we do not recorrd with porg (first case belaow), or a true install
+     that we do not record with porg (first case below), or a true install
      instruction (otherwise below) -->
         <xsl:choose>
 <!--____________________________________________________________ -->
-          <xsl:when test="contains(string($current-instr),'useradd') or
-                          contains(string($current-instr),'groupadd') or
-                          contains(string($current-instr),'usermod') or
-                          contains(string($current-instr),'icon-cache') or
-                          contains(string($current-instr),'desktop-database') or
-                          contains(string($current-instr),'compile-schemas') or
-                          contains(string($current-instr),'query-loaders') or
-                          contains(string($current-instr),'pam.d') or
-                          contains(string($current-instr),'query-immodules')">
+          <xsl:when test="&detect-config;">
             <xsl:if test="$install-seen">
               <xsl:call-template name="end-install"/>
             </xsl:if>
