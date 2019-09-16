@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE stylesheet [
-<!ENTITY detect-config "contains(string($current-instr),'useradd') or
-                        contains(string($current-instr),'groupadd') or
-                        contains(string($current-instr),'usermod') or
-                        contains(string($current-instr),'icon-cache') or
-                        contains(string($current-instr),'desktop-database') or
-                        contains(string($current-instr),'compile-schemas') or
-                        contains(string($current-instr),'query-loaders') or
-                        contains(string($current-instr),'pam.d') or
-                        contains(string($current-instr),'/opt/rustc') or
-                        contains(string($current-instr),'query-immodules')">
+<!ENTITY detect-config
+        "contains(string($current-instr),'useradd') or
+         contains(string($current-instr),'groupadd') or
+         contains(string($current-instr),'usermod') or
+         contains(string($current-instr),'icon-cache') or
+         contains(string($current-instr),'desktop-database') or
+         contains(string($current-instr),'compile-schemas') or
+         contains(string($current-instr),'query-loaders') or
+         contains(string($current-instr),'pam.d') or
+         contains(string($current-instr),'/opt/rustc') or
+         contains(string($current-instr),'libQt5WebEngine') or
+         contains(string($current-instr),'query-immodules')">
 ]>
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
