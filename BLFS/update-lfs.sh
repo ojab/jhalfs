@@ -98,11 +98,12 @@ if [ x$ANSWER = "xyes" ] ; then
     for pack in $(grep '<productname' $LFS_FULL |
                   sed 's/.*>\([^<]*\)<.*/\1/' |
                   sort | uniq); do
-        if [ "$pack" = "libstdc++" -o \
-             "$pack" = "tcl"       -o \
-             "$pack" = "tcl-core"  -o \
-             "$pack" = "expect"    -o \
-             "$pack" = "dejagnu"      ]; then continue; fi
+        case "x$pack" in
+            xtcl | xexpect | xdejagnu | xgcc* | *pass[12] | xvim |
+            xshadow | xPython | xlinux-headers | xdbus | xsystemd )
+	        continue ;;
+        esac
+
         VERSION=$(grep -A1 ">$pack</product" $LFS_FULL |
                     head -n2 |
                     sed -n '2s/.*>\([^<]*\)<.*/\1/p')
