@@ -157,7 +157,7 @@
           <xsl:apply-templates mode="lfs"/>
         </xsl:element>
       </xsl:when>
-      <xsl:otherwise>i<!--
+      <xsl:otherwise><!--
         <xsl:element name="{name()}">
           <xsl:for-each select="attribute::*">
             <xsl:attribute name="{name()}">
@@ -193,11 +193,20 @@
       </xsl:when>
       <xsl:when test="self::screen">
         <xsl:choose>
+<!-- Since we are using the *-full.xml files, revisions have already been
+     selected, so no need to bother about revision attributes-->
           <xsl:when test="@role='nodump'">
             <xsl:copy-of select="."/>
           </xsl:when>
-<!-- Since we are using the *-full.xml files, revisions have already been
-     selected, so no need to bother about revision attributes-->
+          <xsl:when test="contains(string(),'&lt;your name here&gt;')">
+            <screen role="root"><userinput>
+              <xsl:copy-of
+                select="substring-before(string(),'&lt;your name here&gt;')"/>
+              <xsl:text>jhalfs</xsl:text>
+              <xsl:copy-of
+                select="substring-after(string(),'&lt;your name here&gt;')"/>
+            </userinput></screen>
+          </xsl:when>
           <xsl:when test="./userinput[@remap='install' or not(@remap)]">
             <screen role="root">
               <xsl:copy-of select="./*"/>
