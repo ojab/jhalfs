@@ -17,6 +17,7 @@
                       $package='systemd' or
                       $package='Python' or
                       $package='shadow'"/>
+      <xsl:when test="$package='bootscripts'">true</xsl:when>
       <xsl:when test="$package='kernel'">true</xsl:when>
       <xsl:when test="$package='LFS-Release'">true</xsl:when>
       <xsl:otherwise>
@@ -37,6 +38,11 @@
                       $package='systemd' or
                       $package='Python' or
                       $package='shadow'"/>
+      <xsl:when test="$package='bootscripts'">
+        <xsl:for-each select="document($lfsbook)">
+          <xsl:apply-templates select="key('idlfs',$package)[ancestor::chapter/@id='chapter-bootscripts']" mode="lfs"/>
+        </xsl:for-each>
+      </xsl:when>
       <xsl:when test="$package='kernel'">
         <xsl:for-each select="document($lfsbook)">
           <xsl:apply-templates select="key('idlfs',$package)[ancestor::chapter/@id='chapter-bootable']" mode="lfs"/>
@@ -66,7 +72,14 @@
       <xsl:when test="self::sect1">
         <xsl:element name="sect1">
           <xsl:attribute name="id">
-            <xsl:value-of select="./sect1info/productname"/>
+            <xsl:choose>
+              <xsl:when
+                  test="./sect1info/productname=
+                                   'bootscripts'">lfs-bootscripts</xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="./sect1info/productname"/>
+              </xsl:otherwise>
+            </xsl:choose>
           </xsl:attribute>
           <xsl:apply-templates mode="lfs"/>
         </xsl:element>

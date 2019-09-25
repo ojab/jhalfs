@@ -41,6 +41,16 @@
           <xsl:text>&#xA;    </xsl:text>
         </sublist>
         <sublist>
+          <xsl:attribute name="id">lfs-7</xsl:attribute>
+          <xsl:text>&#xA;      </xsl:text>
+          <name>LFS Chapter 7</name>
+          <xsl:apply-templates
+               select='document($lfs-full)//
+                            chapter[@id="chapter-bootscripts"]/
+                                 sect1/sect1info[./productname="bootscripts"]'/>
+          <xsl:text>&#xA;    </xsl:text>
+        </sublist>
+        <sublist>
           <xsl:attribute name="id">lfs-8</xsl:attribute>
           <xsl:text>&#xA;      </xsl:text>
           <name>LFS Chapter 8</name>
