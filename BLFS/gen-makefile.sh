@@ -50,12 +50,15 @@ EOF
 #----------------------------------#
 __wrt_touch() {                    #
 #----------------------------------#
-  local pkg_name=$1
+local pkg_name="${1#*-?-}"
+# For having a unique id, we have added lfs- to bootscripts package.
+# We need to remove it now.
+case "$pkg_name" in lfs-bootscripts) pkg_name=bootscripts ;; esac
 
 (
 cat << EOF
 	@xsltproc --stringparam packages ${PACK_FILE} \\
-	--stringparam package ${pkg_name#*-?-} \\
+	--stringparam package "${pkg_name}" \\
 	-o track.tmp \\
 	${BUMP} \$(TRACKING_FILE) && \\
 	sed -i 's@PACKDESC@${ATOPDIR}/packdesc.dtd@' track.tmp && \\
