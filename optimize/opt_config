@@ -8,11 +8,12 @@
 #
 
 #--- List of packages that have issues with parallelization.
+## As of December 21st, 2019, there seems to be none...
 #    This list may be different for you.
-BLACK_LIST="attr autoconf coreutils dejagnu gettext gperf groff man-db vim"
+#BLACK_LIST="attr autoconf coreutils dejagnu gettext gperf groff man-db vim"
 #    Rationale for attr, coreutils, gperf: the tests do not pass with -jX
-#    CLFS packages
-BLACK_LIST="$BLACK_LIST libee"
+#    CLFS packages (not tested on December 21st, 2019)
+#BLACK_LIST="$BLACK_LIST libee"
 
 #--- Default optimization mode
 #    This mode is overridden by definitions in opt_override;
