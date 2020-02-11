@@ -102,7 +102,7 @@
      version 2.4, let us keep this -->
         <xsl:if test="(../@id='chapter-temporary-tools' or
                   ../@id='chapter-building-system' or
-                  ../@id='chapter-bootscripts' or
+                  ../@id='chapter-config' or
                   ../@id='chapter-bootable') and
                   (sect2[not(@revision) or @revision=$revision]//..|.)/
                       screen[(not(@role) or @role != 'nodump') and
