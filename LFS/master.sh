@@ -491,6 +491,7 @@ mk_LUSER: mk_SETUP
 	@touch \$@
 
 mk_SUDO: mk_LUSER
+	@sudo rm envars
 	@sudo make BREAKPOINT=\$(BREAKPOINT) SUDO
 	@touch \$@
 
