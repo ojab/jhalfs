@@ -89,6 +89,19 @@
 
 <!-- End parameters -->
 
+<!-- bashdir is used at the beginning of chapter 6, for the #! line.
+  If we created a /tools directory in chapter 4, bash is in /tools/bin,
+otherwise it is in /bin.-->
+  <xsl:variable name="bashdir">
+    <xsl:choose>
+      <xsl:when test="//sect1[@id='ch-tools-creatingtoolsdir']">
+        <xsl:text>/tools</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text></xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
   <xsl:template match="/">
     <xsl:apply-templates select="//sect1[not(@revision) or
                                          @revision=$revision]"/>
@@ -158,16 +171,13 @@
     </xsl:if>
     <!-- Creating dirs and files -->
     <exsl:document href="{$dirname}/{$order}-{$filename}" method="text">
-      <xsl:choose>
-        <xsl:when test="@id='ch-system-creatingdirs' or
-                        @id='ch-system-createfiles' or
-                        @id='ch-system-strippingagain'">
-          <xsl:text>#!/tools/bin/bash&#xA;set +h&#xA;</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>#!/bin/bash&#xA;set +h&#xA;</xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:text>#!</xsl:text>
+      <xsl:if test="@id='ch-system-creatingdirs' or
+                    @id='ch-system-createfiles' or
+                    @id='ch-system-strippingagain'">
+        <xsl:copy-of select="$bashdir"/>
+      </xsl:if>
+      <xsl:text>/bin/bash&#xA;set +h&#xA;</xsl:text>
       <xsl:if test="not(@id='ch-tools-stripping') and
                     not(@id='ch-system-strippingagain')">
         <xsl:text>set -e&#xA;</xsl:text>
