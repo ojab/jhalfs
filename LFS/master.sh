@@ -97,34 +97,35 @@ chapter5_Makefiles() {
 #----------------------------#
   echo "${tab_}${GREEN}Processing... ${L_arrow}Chapter5     ( LUSER ) ${R_arrow}"
 
+# Initialize the Makefile target: it'll change during chapter
+# For vanilla lfs, the "changingowner" script should be run as root. So
+# it belongs to the "SUDO" target, with list in the "runasroot" variable.
+# For new lfs, changingowner and kernfs are in "runsaroot", then the following,
+# starting at creatingdirs, are in the "CHROOT" target, in variable "chapter6".
+# Makefile_target records the variable, not really the target!
+# We use a case statement on that variable, because instructions in the
+# Makefile change according to the phase of the build (LUSER, SUDO, CHROOT).
+  Makefile_target=chapter5
+
+# Start loop
   for file in chapter05/* ; do
     # Keep the script file name
     this_script=`basename $file`
 
-    # If no testsuites are run, then TCL, Expect, DejaGNU and Check
-    # aren't needed (but building them does not hurt).
-    # Fix also locales creation when running chapter05 testsuites (ugly)
+    # Fix locales creation when running chapter05 testsuites (ugly)
     case "${this_script}" in
-#      *tcl)       [[ "${TEST}" = "0" ]] && continue ;;
-#      *expect)    [[ "${TEST}" = "0" ]] && continue ;;
-#      *dejagnu)   [[ "${TEST}" = "0" ]] && continue ;;
-#      *check)     [[ "${TEST}" = "0" ]] && continue ;;
-# We now do that in LFS.xsl, because stripping.xml contains other cleaning
-# instructions
-#      *stripping) [[ "${STRIP}" = "n" ]] && continue ;;
       *glibc)     [[ "${TEST}" = "3" ]] && \
                   sed -i 's@/usr/lib/locale@/tools/lib/locale@' $file ;;
     esac
 
-    # First append each name of the script files to a list (this will become
-    # the names of the targets in the Makefile
-    # DO NOT append the changingowner script, it need be run as root.
-    # A hack is necessary: create script in chap5 BUT run as a dependency for
-    # SUDO target
+    # Append each name of the script files to a list that Makefile_target
+    # points to. But before that, change Makefile_target at the first script
+    # of each target.
     case "${this_script}" in
-      *changingowner) runasroot="$runasroot ${this_script}" ;;
-                   *) chapter5="$chapter5 ${this_script}" ;;
+      *changingowner) Makefile_target=runasroot ;;
+      *creatingdirs ) Makefile_target=chapter6  ;; # only run for new lfs
     esac
+    eval $Makefile_target=\"\$$Makefile_target ${this_script}\"
 
     # Grab the name of the target (minus the -pass1 or -pass2 in the case of gcc
     # and binutils in chapter 5)
@@ -142,13 +143,20 @@ chapter5_Makefiles() {
 
     # Drop in the name of the target on a new line, and the previous target
     # as a dependency. Also call the echo_message function.
-    LUSER_wrt_target "${this_script}" "$PREV" "$pkg_version"
+    case $Makefile_target in
+      chapter6) CHROOT_wrt_target "${this_script}" "$PREV" "$pkg_version" ;;
+      *)        LUSER_wrt_target "${this_script}" "$PREV" "$pkg_version" ;;
+    esac
 
     # If $pkg_tarball isn't empty, we've got a package...
     if [ "$pkg_tarball" != "" ] ; then
       # Always initialize the log file, since the test instructions may be
       # "uncommented" by the user
-      LUSER_wrt_test_log "${this_script}" "$pkg_version"
+      case $Makefile_target in
+       chapter6) CHROOT_wrt_test_log "${this_script}" "$pkg_version" ;;
+       *)        LUSER_wrt_test_log "${this_script}" "$pkg_version" ;;
+      esac
+
       # If using optimizations, write the instructions
       case "${OPTIMIZE}${this_script}${REALSBU}" in
           *binutils-pass1y) ;;
@@ -160,9 +168,10 @@ chapter5_Makefiles() {
     # Insert date and disk usage at the top of the log file, the script run
     # and date and disk usage again at the bottom of the log file.
     # The changingowner script must be run as root.
-    case "${this_script}" in
-      *changingowner)  wrt_RunAsRoot "$file" "$pkg_version" ;;
-      *)               LUSER_wrt_RunAsUser "$file" "$pkg_version" ;;
+    case "${Makefile_target}" in
+      runasroot)  wrt_RunAsRoot "$file" "$pkg_version" ;;
+      chapter5)   LUSER_wrt_RunAsUser "$file" "$pkg_version" ;;
+      chapter6)   CHROOT_wrt_RunAsRoot "$file" "$pkg_version" ;;
     esac
 
     # Include a touch of the target name so make can check
@@ -210,6 +219,15 @@ chapter6_Makefiles() {
 
   echo "${tab_}${GREEN}Processing... ${L_arrow}Chapter6$N     ( CHROOT ) ${R_arrow}"
 
+# Initialize the Makefile target. In vanilla lfs, kernfs should be run as root,
+# then the others are run in chroot. If in new lfs, we should start in chroot.
+# this will be changed later because man-pages is the first script in
+# chapter 6. Note that this Makefile_target business is not really needed here
+# but we do it to have a similar structure to chapter 5 (we may merge all
+# those functions at some point).
+  Makefile_target=runasroot
+
+# Start loop
   for file in chapter06$N/* ; do
     # Keep the script file name
     this_script=`basename $file`
@@ -225,7 +243,7 @@ chapter6_Makefiles() {
     name=`echo ${this_script} | sed -e 's@[0-9]\{3\}-@@' -e 's,'$N',,'`
 
     # Find the tarball corresponding to our script.
-    # If it doesn't, we skip it in iterations rebuilds (except stripping).
+    # If it doesn't exist, we skip it in iterations rebuilds (except stripping).
     pkg_tarball=$(sed -n 's/tar -xf \(.*\)/\1/p' $file)
     pkg_version=$(sed -n 's/VERSION=\(.*\)/\1/p' $file)
 
@@ -240,9 +258,10 @@ chapter6_Makefiles() {
     # the names of the targets in the Makefile)
     # The kernfs script must be run as part of SUDO target.
     case "${this_script}" in
-      *kernfs) runasroot="$runasroot ${this_script}" ;;
-            *) chapter6="$chapter6 ${this_script}" ;;
+            *creatingdirs) Makefile_target=chapter6 ;;
+            *man-pages   ) Makefile_target=chapter6 ;;
     esac
+    eval $Makefile_target=\"\$$Makefile_target ${this_script}\"
 
     #--------------------------------------------------------------------#
     #         >>>>>>>> START BUILDING A Makefile ENTRY <<<<<<<<          #
@@ -252,9 +271,9 @@ chapter6_Makefiles() {
     # as a dependency. Also call the echo_message function.
     # In the mount of kernel filesystems we need to set LFS
     # and not to use chroot.
-    case "${this_script}" in
-      *kernfs)  LUSER_wrt_target  "${this_script}" "$PREV" "$pkg_version" ;;
-      *)        CHROOT_wrt_target "${this_script}" "$PREV" "$pkg_version" ;;
+    case "${Makefile_target}" in
+      runasroot)  LUSER_wrt_target  "${this_script}" "$PREV" "$pkg_version" ;;
+      *)          CHROOT_wrt_target "${this_script}" "$PREV" "$pkg_version" ;;
     esac
 
     # If $pkg_tarball isn't empty, we've got a package...
@@ -265,7 +284,7 @@ chapter6_Makefiles() {
       if [ "${INSTALL_LOG}" = "y" ] && [ "x${N}" = "x" ] ; then
         CHROOT_wrt_TouchTimestamp
       fi
-      # Always initialize the log file, so that the use may reinstate a
+      # Always initialize the log file, so that the user may reinstate a
       # commented out test
       CHROOT_wrt_test_log "${this_script}" "$pkg_version"
       # If using optimizations, write the instructions
@@ -274,9 +293,9 @@ chapter6_Makefiles() {
 
     # In the mount of kernel filesystems we need to set LFS
     # and not to use chroot.
-    case "${this_script}" in
-      *kernfs)  wrt_RunAsRoot  "$file" "$pkg_version" ;;
-      *)        CHROOT_wrt_RunAsRoot "$file" "$pkg_version" ;;
+    case "${Makefile_target}" in
+      runasroot)  wrt_RunAsRoot  "$file" "$pkg_version" ;;
+      *)          CHROOT_wrt_RunAsRoot "$file" "$pkg_version" ;;
     esac
 
     # Write installed files log and remove the build directory(ies)
