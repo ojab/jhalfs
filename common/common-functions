@@ -93,6 +93,9 @@ if [ "${CLEAN}" = "y" ]; then
       echo -n "Cleaning remaining extracted sources in $BUILDDIR/sources ..."
       sudo rm -rf `find $BUILDDIR/sources -maxdepth 1 -mindepth 1 -type d`
       echo "done"
+      echo -n "Removing dangling symlinks in / ..."
+      sudo rm -f /tools /cross-tools
+      echo "done"
     fi
   fi
 fi
