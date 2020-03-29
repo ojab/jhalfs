@@ -100,11 +100,12 @@
      of the "calling" apply-template. But that would change the numbering,
      so that it would be difficult to compare to previous versions. So for
      version 2.4, let us keep this -->
-        <xsl:if test="(../@id='chapter-temporary-tools' or
-                  ../@id='chapter-building-system' or
-                  ../@id='chapter-bootscripts' or
-                  ../@id='chapter-config' or
-                  ../@id='chapter-bootable') and
+    <xsl:if test="(../@id='chapter-temporary-tools' or
+                   ../@id='chapter-final-preps' or
+                   ../@id='chapter-building-system' or
+                   ../@id='chapter-bootscripts' or
+                   ../@id='chapter-config' or
+                   ../@id='chapter-bootable') and
                   (sect2[not(@revision) or @revision=$revision]//..|.)/
                       screen[(not(@role) or @role != 'nodump') and
                              (not(@revision) or @revision=$revision)]/
@@ -172,9 +173,11 @@
         <xsl:text>set -e&#xA;</xsl:text>
       </xsl:if>
       <xsl:text>&#xA;</xsl:text>
-      <xsl:call-template name="start-script">
-        <xsl:with-param name="order" select="$order"/>
-      </xsl:call-template>
+      <xsl:if test="ancestor::chapter/@id != 'chapter-final-preps'">
+        <xsl:call-template name="start-script">
+          <xsl:with-param name="order" select="$order"/>
+        </xsl:call-template>
+      </xsl:if>
       <xsl:apply-templates select="sect2[not(@revision) or
                                          @revision=$revision] |
                                    screen[(not(@role) or
@@ -195,8 +198,10 @@
                                                         ]//userinput"
            mode="pkgmngt"/>
       </xsl:if>
-      <xsl:text>echo -e "\n\nTotalseconds: $SECONDS\n"&#xA;</xsl:text>
-      <xsl:call-template name="end-script"/>
+      <xsl:if test="ancestor::chapter/@id != 'chapter-final-preps'">
+        <xsl:text>echo -e "\n\nTotalseconds: $SECONDS\n"&#xA;</xsl:text>
+        <xsl:call-template name="end-script"/>
+      </xsl:if>
       <xsl:text>exit&#xA;</xsl:text>
     </exsl:document>
     </xsl:if>
