@@ -94,7 +94,7 @@
 otherwise it is in /bin.-->
   <xsl:variable name="bashdir">
     <xsl:choose>
-      <xsl:when test="//sect1[@id='ch-tools-creatingtoolsdir']">
+      <xsl:when test="//sect1[@id='ch-preps-creatingtoolsdir']">
         <xsl:text>/tools</xsl:text>
       </xsl:when>
       <xsl:otherwise>
