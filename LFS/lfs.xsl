@@ -1142,11 +1142,18 @@ LOGLEVEL="</xsl:text>
 <!-- save the timer, so that unpacking, and du is not counted -->
 PREV_SEC=${SECONDS}
       <!-- get the location of the system root -->
-if [ -h /tools ]; then
-  ROOT=$(dirname $(readlink /tools))/
-else
-  ROOT=/
-fi
+ROOT=</xsl:text>
+    <xsl:choose>
+      <xsl:when test="ancestor::chapter/@id = 'chapter-temporary-tools'">
+        <xsl:text>$LFS/
+</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>/
+</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+    <xsl:text>
 SCRIPT_ROOT=</xsl:text>
     <xsl:copy-of select="$script-root"/>
     <xsl:text>
