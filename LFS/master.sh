@@ -14,56 +14,80 @@
 chapter4_Makefiles() {       #
 #----------------------------#
   echo "${tab_}${GREEN}Processing... ${L_arrow}Chapter4     ( SETUP ) ${R_arrow}"
+  # Ensure the first dependency is empty
+  unset PREV
 
-# If $LUSER_HOME is already present in the host, we asume that the
-# lfs user and group are also presents in the host, and a backup
-# of their bash init files is made.
+  for file in chapter04/* ; do
+    # Keep the script file name
+    this_script=`basename $file`
+
+    # First append each name of the script files to a list (this will become
+    # the names of the targets in the Makefile
+    # DO NOT append the settingenvironment script, it need be run as luser.
+    # A hack is necessary: create script in chap4 BUT run as a dependency for
+    # LUSER target
+    case "${this_script}" in
+      *settingenvironment) chapter5="$chapter5 ${this_script}" ;;
+                        *) chapter4="$chapter4 ${this_script}" ;;
+    esac
+
+    # Grab the name of the target
+    name=`echo ${this_script} | sed -e 's@[0-9]\{3\}-@@'`
+
+    #--------------------------------------------------------------------#
+    #         >>>>>>>> START BUILDING A Makefile ENTRY <<<<<<<<          #
+    #--------------------------------------------------------------------#
+    #
+
+    # Drop in the name of the target on a new line, and the previous target
+    # as a dependency. Also call the echo_message function.
+    LUSER_wrt_target "${this_script}" "$PREV"
+
+    case "${this_script}" in
+      *settingenvironment)
 (
-    cat << EOF
-020-creatingtoolsdir:
-	@\$(call echo_message, Building)
-	@mkdir \$(MOUNT_PT)/tools && \\
-	rm -f /tools && \\
-	ln -s \$(MOUNT_PT)/tools /
-	@\$(call housekeeping)
-
-021-addinguser:  020-creatingtoolsdir
-	@\$(call echo_message, Building)
-	@-if [ ! -d \$(LUSER_HOME) ]; then \\
-		groupadd \$(LGROUP); \\
-		useradd -s /bin/bash -g \$(LGROUP) -m -k /dev/null \$(LUSER); \\
-	else \\
-		touch luser-exist; \\
-	fi;
-	@chown \$(LUSER) \$(MOUNT_PT)/tools && \\
-	chmod -R a+wt \$(MOUNT_PT)/\$(SCRIPT_ROOT) && \\
-	chmod a+wt \$(SRCSDIR)
-	@\$(call housekeeping)
-
-022-settingenvironment:  021-addinguser
-	@\$(call echo_message, Building)
-	@if [ -f \$(LUSER_HOME)/.bashrc -a ! -f \$(LUSER_HOME)/.bashrc.XXX ]; then \\
-		mv \$(LUSER_HOME)/.bashrc \$(LUSER_HOME)/.bashrc.XXX; \\
-	fi;
-	@if [ -f \$(LUSER_HOME)/.bash_profile  -a ! -f \$(LUSER_HOME)/.bash_profile.XXX ]; then \\
-		mv \$(LUSER_HOME)/.bash_profile \$(LUSER_HOME)/.bash_profile.XXX; \\
-	fi;
-	@echo "set +h" > \$(LUSER_HOME)/.bashrc && \\
-	echo "umask 022" >> \$(LUSER_HOME)/.bashrc && \\
-	echo "LFS=\$(MOUNT_PT)" >> \$(LUSER_HOME)/.bashrc && \\
-	echo "LC_ALL=POSIX" >> \$(LUSER_HOME)/.bashrc && \\
-	echo "LFS_TGT=`uname -m`-lfs-linux-gnu" >> \$(LUSER_HOME)/.bashrc && \\
-	echo "PATH=/tools/bin:/bin:/usr/bin" >> \$(LUSER_HOME)/.bashrc && \\
-	echo "export LFS LC_ALL LFS_TGT PATH" >> \$(LUSER_HOME)/.bashrc && \\
-	echo "source $JHALFSDIR/envars" >> \$(LUSER_HOME)/.bashrc && \\
-	chown \$(LUSER):\$(LGROUP) \$(LUSER_HOME)/.bashrc && \\
-	touch envars && \\
-	chown \$(LUSER) envars
-	@\$(call housekeeping)
+cat << EOF
+	@cd && \\
+	function source() { true; } && \\
+	export -f source && \\
+	\$(CMDSDIR)/`dirname $file`/\$@ >> \$(LOGDIR)/\$@ 2>&1 && \\
+	sed 's|/mnt/lfs|\$(MOUNT_PT)|' -i .bashrc && \\
+	echo source $JHALFSDIR/envars >> .bashrc
+	@\$(PRT_DU) >>logs/\$@
 EOF
-) > $MKFILE.tmp
+) >> $MKFILE.tmp
+	      ;;
+      *addinguser)
+(
+cat << EOF
+	@if [ -f luser-id ]; then \\
+	  function useradd() { true; }; \\
+	  function groupadd() { true; }; \\
+	  export -f useradd groupadd; \\
+	fi; \\
+	export LFS=\$(MOUNT_PT) && \\
+	\$(CMDSDIR)/`dirname $file`/\$@ >> \$(LOGDIR)/\$@ 2>&1; \\
+	\$(PRT_DU) >>logs/\$@
+	@chown \$(LUSER):\$(LGROUP) envars
+	@chmod -R a+wt $JHALFSDIR
+	@chmod a+wt \$(SRCSDIR)
+EOF
+) >> $MKFILE.tmp
+	      ;;
+      *)                   wrt_RunAsRoot "$file" ;;
+    esac
 
-  chapter4=" 020-creatingtoolsdir 021-addinguser 022-settingenvironment"
+    # Include a touch of the target name so make can check
+    # if it's already been made.
+    wrt_touch
+    #
+    #--------------------------------------------------------------------#
+    #              >>>>>>>> END OF Makefile ENTRY <<<<<<<<               #
+    #--------------------------------------------------------------------#
+
+    # Keep the script file name for Makefile dependencies.
+    PREV=${this_script}
+  done  # end for file in chapter04/*
 }
 
 
@@ -107,9 +131,6 @@ chapter5_Makefiles() {
     name=`echo ${this_script} | sed -e 's@[0-9]\{3\}-@@' \
                                     -e 's@-pass[0-9]\{1\}@@' \
                                     -e 's@-libstdc++@@'`
-
-    # Set the dependency for the first target.
-    if [ -z $PREV ] ; then PREV=022-settingenvironment ; fi
 
     #--------------------------------------------------------------------#
     #         >>>>>>>> START BUILDING A Makefile ENTRY <<<<<<<<          #
@@ -480,14 +501,15 @@ ck_UID:
 	fi
 
 mk_SETUP:
+	@sudo make save-luser
 	@\$(call echo_SU_request)
 	@sudo make BREAKPOINT=\$(BREAKPOINT) SETUP
 	@touch \$@
 
 mk_LUSER: mk_SETUP
 	@\$(call echo_SULUSER_request)
-	@( \$(SU_LUSER) "make -C \$(MOUNT_PT)/\$(SCRIPT_ROOT) BREAKPOINT=\$(BREAKPOINT) LUSER" )
-	@sudo make restore-luser-env
+	@\$(SU_LUSER) "make -C \$(MOUNT_PT)/\$(SCRIPT_ROOT) BREAKPOINT=\$(BREAKPOINT) LUSER"
+	@sudo make restore-luser
 	@touch \$@
 
 mk_SUDO: mk_LUSER
@@ -573,26 +595,37 @@ create-sbu_du-report:  mk_BOOT
 	@if [ "\$(ADD_REPORT)" = "y" ]; then \\
 	  sudo ./create-sbu_du-report.sh logs $VERSION $(date --iso-8601); \\
 	  \$(call echo_report,$VERSION-SBU_DU-$(date --iso-8601).report); \\
-	fi;
+	fi
 	@touch  \$@
 
-restore-luser-env:
+save-luser:
 	@\$(call echo_message, Building)
-	@if [ -f \$(LUSER_HOME)/.bashrc.XXX ]; then \\
-		mv -f \$(LUSER_HOME)/.bashrc.XXX \$(LUSER_HOME)/.bashrc; \\
-	fi;
-	@if [ -f \$(LUSER_HOME)/.bash_profile.XXX ]; then \\
-		mv \$(LUSER_HOME)/.bash_profile.XXX \$(LUSER_HOME)/.bash_profile; \\
-	fi;
-	@chown \$(LUSER):\$(LGROUP) \$(LUSER_HOME)/.bash*
+	@if lslogins \$(LUSER) > luser-id 2>/dev/null; then  \\
+	    if [ ! -d \$(LUSER_HOME).XXX ]; then \\
+		mv \$(LUSER_HOME){,.XXX}; \\
+		mkdir \$(LUSER_HOME); \\
+		chown \$(LUSER):\$(LGROUP) \$(LUSER_HOME); \\
+	    fi; \\
+	else \\
+		rm luser-id; \\
+	fi
+	@\$(call housekeeping)
+
+restore-luser:
+	@\$(call echo_message, Building)
+	@if [ -f luser-id ]; then \\
+		rm -rf \$(LUSER_HOME); \\
+		mv \$(LUSER_HOME){.XXX,}; \\
+		rm luser-id; \\
+	else \\
+		userdel \$(LUSER); \\
+		groupdel \$(LGROUP); \\
+		rm -rf \$(LUSER_HOME); \\
+	fi
 	@\$(call housekeeping)
 
 do_housekeeping:
 	@-rm /tools
-	@-if [ ! -f luser-exist ]; then \\
-		userdel \$(LUSER); \\
-		rm -rf \$(LUSER_HOME); \\
-	fi;
 
 EOF
 ) >> $MKFILE
