@@ -1144,7 +1144,8 @@ PREV_SEC=${SECONDS}
       <!-- get the location of the system root -->
 ROOT=</xsl:text>
     <xsl:choose>
-      <xsl:when test="ancestor::chapter/@id = 'chapter-temporary-tools'">
+      <xsl:when test="starts-with(./@id, 'ch-tools') or
+                      contains   (./@id, 'kernfs')">
         <xsl:text>$LFS/
 </xsl:text>
       </xsl:when>
