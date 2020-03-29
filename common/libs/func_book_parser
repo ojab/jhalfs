@@ -281,7 +281,7 @@ create_chroot_scripts() {    #
     lfs)
       xsltproc --nonet --xinclude \
                -o chroot-scripts/ chroot.xsl \
-               $BOOK/chapter06/chapter06.xml >> $LOGDIR/$LOG 2>&1
+               $BOOK/chapter0?/*chroot*.xml >> $LOGDIR/$LOG 2>&1
       ;;
     *)
   esac
@@ -312,7 +312,7 @@ create_kernfs_scripts() {    #
     lfs)
       xsltproc --nonet \
                -o kernfs-scripts/devices.sh kernfs.xsl \
-               $BOOK/chapter06/kernfs.xml >> $LOGDIR/$LOG 2>&1
+               $BOOK/*/kernfs.xml >> $LOGDIR/$LOG 2>&1
       xsltproc --nonet \
                -o kernfs-scripts/teardown.sh kernfs.xsl \
                $BOOK/chapter09/reboot.xml >> $LOGDIR/$LOG 2>&1
