@@ -532,7 +532,7 @@ mk_LUSER: mk_SETUP
 	@touch \$@
 
 mk_SUDO: mk_LUSER
-	@sudo rm envars
+	@sudo rm -f envars
 	@sudo make BREAKPOINT=\$(BREAKPOINT) SUDO
 	@touch \$@
 
@@ -603,7 +603,7 @@ EOF
 fi
 (
     cat << EOF
-CHROOT:       SHELL=/tools/bin/bash
+CHROOT:       SHELL=\$(filter %bash,\$(CHROOT1))
 CHROOT:       $chapter6
 BOOT:         $chapter78
 CUSTOM_TOOLS: $custom_list
