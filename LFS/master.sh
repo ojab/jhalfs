@@ -619,11 +619,13 @@ create-sbu_du-report:  mk_BOOT
 
 save-luser:
 	@\$(call echo_message, Building)
-	@if lslogins \$(LUSER) > luser-id 2>/dev/null; then  \\
+	@LUSER_ID=\$(grep '^$(LUSER):' /etc/passwd | cut -d: -f3); \\
+	if [ -n "\$LUSER_ID" ]; then  \\
 	    if [ ! -d \$(LUSER_HOME).XXX ]; then \\
 		mv \$(LUSER_HOME){,.XXX}; \\
 		mkdir \$(LUSER_HOME); \\
 		chown \$(LUSER):\$(LGROUP) \$(LUSER_HOME); \\
+	        echo "\$LUSER_ID" > luser-id; \\
 	    fi; \\
 	else \\
 		rm luser-id; \\
