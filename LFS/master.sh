@@ -619,7 +619,7 @@ create-sbu_du-report:  mk_BOOT
 
 save-luser:
 	@\$(call echo_message, Building)
-	@LUSER_ID=\$(grep '^$(LUSER):' /etc/passwd | cut -d: -f3); \\
+	@LUSER_ID=\$(grep '^\$(LUSER):' /etc/passwd | cut -d: -f3); \\
 	if [ -n "\$LUSER_ID" ]; then  \\
 	    if [ ! -d \$(LUSER_HOME).XXX ]; then \\
 		mv \$(LUSER_HOME){,.XXX}; \\
