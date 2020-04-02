@@ -225,7 +225,10 @@ chapter6_Makefiles() {
 # chapter 6. Note that this Makefile_target business is not really needed here
 # but we do it to have a similar structure to chapter 5 (we may merge all
 # those functions at some point).
-  Makefile_target=runasroot
+  case "$N" in
+     -build*) Makefile_target=chapter6   ;;
+           *) Makefile_target=runasroot  ;;
+  esac
 
 # Start loop
   for file in chapter06$N/* ; do
@@ -317,8 +320,13 @@ chapter6_Makefiles() {
     # Keep the script file name for Makefile dependencies.
     PREV=${this_script}
     # Set system_build envar for iteration targets
-    system_build=$chapter6
+    if [ -z "$N" ]; then
+      system_build="$system_build $this_script"
+    fi
   done # end for file in chapter06/*
+  if [ -n "$N" ]; then
+    system_build="$chapter6"
+  fi
 }
 
 #----------------------------#

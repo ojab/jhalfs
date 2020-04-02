@@ -96,7 +96,7 @@ wrt_logs() {                       #
 	  for file in \`ls .\` ; do \\
 	    mv -f \$\$file \`echo \$\$file | sed -e 's,-$build,,'\` ; \\
 	  done ; \\
-	fi ;
+	fi
 	@cd /\$(SCRIPT_ROOT)
 	@if [ -d test-logs ] ; then \\
 	  cd test-logs && \\
