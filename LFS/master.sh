@@ -627,7 +627,7 @@ create-sbu_du-report:  mk_BOOT
 
 save-luser:
 	@\$(call echo_message, Building)
-	@LUSER_ID=\$(grep '^\$(LUSER):' /etc/passwd | cut -d: -f3); \\
+	@LUSER_ID=\$\$(grep '^\$(LUSER):' /etc/passwd | cut -d: -f3); \\
 	if [ -n "\$\$LUSER_ID" ]; then  \\
 	    if [ ! -d \$(LUSER_HOME).XXX ]; then \\
 		mv \$(LUSER_HOME){,.XXX}; \\
@@ -637,7 +637,7 @@ save-luser:
 	    echo "\$\$LUSER_ID" > luser-id; \\
 	    echo User \$(LUSER) exists with ID \$\$LUSER_ID; \\
 	else \\
-	    rm luser-id; \\
+	    rm -f luser-id; \\
 	    echo User \$(LUSER) does not exist; \\
 	    echo It will be created with book instructions.; \\
 	fi
