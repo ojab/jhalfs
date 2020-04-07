@@ -215,6 +215,10 @@ chapter6_Makefiles() {
     done
     # Remove Bzip2 binaries before make install (LFS-6.2 compatibility)
     sed -e 's@make install@rm -vf /usr/bin/bz*\n&@' -i chapter06$N/*-bzip2$N
+    # Remove openssl-<version> from /usr/share/doc (LFS-9.x), because
+    # otherwise the mv command creates an openssl directory.
+    sed -e 's@mv -v@rm -rfv /usr/share/doc/openssl-*\n&@' \
+        -i chapter06$N/*-openssl$N
   fi
 
   echo "${tab_}${GREEN}Processing... ${L_arrow}Chapter6$N     ( CHROOT ) ${R_arrow}"
