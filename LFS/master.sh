@@ -250,13 +250,14 @@ chapter6_Makefiles() {
     name=`echo ${this_script} | sed -e 's@[0-9]\{3\}-@@' -e 's,'$N',,'`
 
     # Find the tarball corresponding to our script.
-    # If it doesn't exist, we skip it in iterations rebuilds (except stripping).
+    # If it doesn't exist, we skip it in iterations rebuilds (except stripping
+    # and revisedchroot, where .a and .la files are removed).
     pkg_tarball=$(sed -n 's/tar -xf \(.*\)/\1/p' $file)
     pkg_version=$(sed -n 's/VERSION=\(.*\)/\1/p' $file)
 
     if [[ "$pkg_tarball" = "" ]] && [[ -n "$N" ]] ; then
       case "${this_script}" in
-        *stripping*) ;;
+        *stripping*|*revised*) ;;
         *)  continue ;;
       esac
     fi
