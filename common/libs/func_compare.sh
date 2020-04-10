@@ -61,9 +61,11 @@ wrt_compare_work() {               #
 
   if [[ "$RUN_ICA" = "y" ]] ; then
     local DEST_ICA=$DEST_TOPDIR/ICA && \
+  # the PRUNEPATH additional setting is to avoid .pyc files to show up in diff
 (
     cat << EOF
-	@extras/do_copy_files "$PRUNEPATH" $ROOT_DIR $DEST_ICA/$ITERATION >>logs/\$@ 2>&1 && \\
+	@PRUNEPATH="$PRUNEPATH \$\$(find /usr/lib -name __pycache__)"; \\
+	extras/do_copy_files "\$\$PRUNEPATH" $ROOT_DIR $DEST_ICA/$ITERATION >>logs/\$@ 2>&1 && \\
 	extras/do_ica_prep $DEST_ICA/$ITERATION >>logs/\$@ 2>&1
 EOF
 ) >> $MKFILE.tmp
