@@ -1,6 +1,8 @@
 # $Id$
 menu "BOOK Settings"
 
+    depends on !REBUILD_MAKEFILE
+
     #--- BOOK/script
     choice
         prompt "Use BOOK"
@@ -630,7 +632,7 @@ menu "BOOK Settings"
 endmenu
 
 menu "General Settings"
-depends on !BOOK_BLFS
+depends on !BOOK_BLFS && !REBUILD_MAKEFILE
 
     #--- {C,H,}LFS User Account
 
@@ -729,7 +731,7 @@ depends on !BOOK_BLFS
 endmenu
 
 menu "Build Settings"
-depends on !BOOK_BLFS
+depends on !BOOK_BLFS && !REBUILD_MAKEFILE
 
     #--- Test Suites
     config    CONFIG_TESTS
@@ -888,7 +890,7 @@ depends on !BOOK_BLFS
 endmenu
 
 menu "System configuration"
-    depends on !BOOK_BLFS
+    depends on !BOOK_BLFS && !REBUILD_MAKEFILE
 
     #--- FSTAB
     config    HAVE_FSTAB
@@ -1229,7 +1231,7 @@ endif
 endmenu
 
 config REBUILD_MAKEFILE
-    depends on !BOOK_BLFS
+#    depends on !BOOK_BLFS
     bool "Rebuild the Makefile (see help)"
     default n
     help
@@ -1239,4 +1241,6 @@ config REBUILD_MAKEFILE
         #   customizing the base system build scripts.
         #
         #   See README.CUSTOM for more info about this feature.
-
+        #   Note that you should do that after configuring a jhalfs
+        #   build, and only if you need changing the build scripts order
+        #   or add a new one.
