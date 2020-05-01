@@ -1077,11 +1077,22 @@ menu "System configuration"
 endmenu        #--- System configuration
 
 menu "Advanced Features"
-depends on !BOOK_BLFS
+depends on !BOOK_BLFS && !REBUILD_MAKEFILE
 
     config    REPORT
         bool "Create SBU and disk usage report"
         default y
+
+    config    SAVE_CH5
+        bool "Save Chapter 5 work"
+        depends on BOOK_LFS || BOOK_LFS_SYSD
+        default n
+        help
+            Save the state of jhalfs at the end of chapter 5:
+            
+            if you tick this item, the whole $LFS directory is
+            saved when chapter 5 is finished. It'll be in an xz
+            compressed tarball in the $LFS/jhalfs directory
 
     #--- ICA
     config    COMPARE

@@ -100,7 +100,7 @@ chapter5_Makefiles() {
 # Initialize the Makefile target: it'll change during chapter
 # For vanilla lfs, the "changingowner" script should be run as root. So
 # it belongs to the "SUDO" target, with list in the "runasroot" variable.
-# For new lfs, changingowner and kernfs are in "runsaroot", then the following,
+# For new lfs, changingowner and kernfs are in "runasroot", then the following,
 # starting at creatingdirs, are in the "CHROOT" target, in variable "chapter6".
 # Makefile_target records the variable, not really the target!
 # We use a case statement on that variable, because instructions in the
@@ -441,6 +441,8 @@ build_Makefile() {           #
 
   chapter4_Makefiles
   chapter5_Makefiles
+  # Add the save target, if needed
+  [[ "$SAVE_CH5" = "y" ]] && wrt_save_target $Makefile_target
   chapter6_Makefiles
   # Add the iterations targets, if needed
   [[ "$COMPARE" = "y" ]] && wrt_compare_targets

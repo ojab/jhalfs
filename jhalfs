@@ -178,6 +178,7 @@ SET_BLOWFISH=${SET_BLOWFISH:=n}
 UNICODE=${UNICODE:=n}
 LOCAL=${LOCAL:=n}
 REALSBU=${REALSBU:=n}
+SAVE_CH5=${SAVE_CH5:=n}
 
 if [[ "${NO_PROGRESS_BAR}" = "y" ]] ; then
 # shellcheck disable=SC2034
@@ -352,6 +353,11 @@ echo "${nl_}${SD_BORDER}${nl_}"
 # compare module
 if [[ "$COMPARE" = "y" ]]; then
   load_file "${COMMON_DIR}/libs/func_compare.sh" 'Loading compare module'
+fi
+#
+# save module
+if [[ "$SAVE_CH5" = "y" ]]; then
+  load_file "${COMMON_DIR}/libs/func_save.sh" 'Loading save module'
 fi
 #
 # optimize module
