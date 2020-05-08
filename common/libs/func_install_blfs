@@ -61,6 +61,10 @@ sudo make -j1 -C $BUILDDIR$BLFS_ROOT             \
           SVN=$SVN_2/BLFS/$BLFS_TREE             \
           $BUILDDIR$BLFS_ROOT/packages.xml
 
+# But then $BUILDDIR/var/lib/ is owned by root if just created, which
+# prevents $LUSER to create "nss_db". Change ownership here
+sudo chown $LUSER:$LGROUP $BUILDDIR/var/lib
+
 # Because the BLFS Makefile is supposed to be used in chroot (or booted)
 # mode, the tracking file has wrong path for DTD. Change it:
 sudo sed -i s@$BUILDDIR@@ $BUILDDIR$TRACKING_DIR/instpkg.xml
