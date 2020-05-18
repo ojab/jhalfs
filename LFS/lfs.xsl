@@ -442,6 +442,7 @@ echo -e "\n\nTotalseconds: $SECONDS\n"
       </xsl:when>
 <!-- Package management -->
 <!-- Add $PKG_DEST to installation commands -->
+<!-- Also add -j1 to make install -->
       <xsl:when test="@remap='install' and
                       not(ancestor::chapter[
                               @id='chapter-temporary-tools'
@@ -453,6 +454,12 @@ echo -e "\n\nTotalseconds: $SECONDS\n"
                 <xsl:text>if [[ ! -d /lib/udev/devices ]] ; then&#xA;</xsl:text>
                 <xsl:apply-templates/>
                 <xsl:text>&#xA;fi&#xA;</xsl:text>
+              </xsl:when>
+              <xsl:when test="contains(string(),'make ')">
+                <xsl:copy-of select="substring-before(string(), 'make ')"/>
+                <xsl:text>make -j1 </xsl:text>
+                <xsl:copy-of select="substring-after(string(), 'make ')"/>
+                <xsl:text>&#xA;</xsl:text>
               </xsl:when>
               <xsl:otherwise>
                 <xsl:apply-templates/>
@@ -499,7 +506,7 @@ echo -e "\n\nTotalseconds: $SECONDS\n"
             <xsl:text>&#xA;</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
-      </xsl:when> <!-- @remap='install' -->
+      </xsl:when> <!-- @remap='install'  and not temporary tools -->
       <!-- if package management, we should make an independant package for
            tzdata. -->
       <xsl:when test="contains(string(),'tzdata') and $pkgmngt='y'">
@@ -546,6 +553,21 @@ unset OLD_PKGDIR
 </xsl:text>
       </xsl:when><!-- addition for tzdata + package management -->
       <!-- End addition for package management -->
+      <!-- add -j1 to make install in chapter 5 -->
+      <xsl:when test="ancestor::chapter[@id='chapter-temporary-tools'] and
+                      @remap='install'">
+        <xsl:choose>
+          <xsl:when test="contains(string(),'make ')">
+            <xsl:copy-of select="substring-before(string(), 'make ')"/>
+            <xsl:text>make -j1 </xsl:text>
+            <xsl:copy-of select="substring-after(string(), 'make ')"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates/>
+          </xsl:otherwise>
+        </xsl:choose>
+        <xsl:text>&#xA;</xsl:text>
+      </xsl:when><!-- chapter 5 install -->
       <!-- The rest of commands -->
       <xsl:otherwise>
         <xsl:apply-templates/>
@@ -913,34 +935,34 @@ LOGLEVEL="</xsl:text>
              <xsl:text>install&#xA;</xsl:text>
             </xsl:when>
             <xsl:when test="ancestor::sect1[@id='ch-system-bzip2']">
-             <xsl:text>make PREFIX=$PKG_DEST/usr install&#xA;</xsl:text>
+             <xsl:text>make -j1 PREFIX=$PKG_DEST/usr install&#xA;</xsl:text>
             </xsl:when>
             <xsl:when test="ancestor::sect1[@id='ch-system-sysklogd']">
-  <xsl:text>make BINDIR=$PKG_DEST/sbin prefix=$PKG_DEST install&#xA;</xsl:text>
+  <xsl:text>make -j1 BINDIR=$PKG_DEST/sbin prefix=$PKG_DEST install&#xA;</xsl:text>
             </xsl:when>
             <xsl:when test="ancestor::sect1[@id='ch-system-iproute2']">
-             <xsl:text>make DESTDIR=$PKG_DEST DOCDIR=</xsl:text>
+             <xsl:text>make -j1 DESTDIR=$PKG_DEST DOCDIR=</xsl:text>
              <xsl:value-of
                select="substring-before(substring-after(string(),'DOCDIR='),
                                         'install')"/>
              <xsl:text>install&#xA;</xsl:text>
             </xsl:when>
             <xsl:when test="ancestor::sect1[@id='ch-system-sysvinit']">
-             <xsl:text>make ROOT=$PKG_DEST</xsl:text>
+             <xsl:text>make -j1 ROOT=$PKG_DEST</xsl:text>
              <xsl:value-of
                select="substring-before(substring-after(string(),'make'),
                                         'install')"/>
              <xsl:text>install&#xA;</xsl:text>
             </xsl:when>
             <xsl:when test="ancestor::sect1[@id='ch-bootable-kernel']">
-             <xsl:text>make INSTALL_MOD_PATH=$PKG_DEST</xsl:text>
+             <xsl:text>make -j1 INSTALL_MOD_PATH=$PKG_DEST</xsl:text>
              <xsl:value-of
                select="substring-before(substring-after(string(),'make'),
                                         'install')"/>
              <xsl:text>install&#xA;</xsl:text>
             </xsl:when>
             <xsl:otherwise>
-              <xsl:text>make DESTDIR=$PKG_DEST</xsl:text>
+              <xsl:text>make -j1 DESTDIR=$PKG_DEST</xsl:text>
               <xsl:call-template name="outputpkgdest">
                 <xsl:with-param
                     name="outputstring"
