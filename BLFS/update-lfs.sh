@@ -99,7 +99,7 @@ if [ x$ANSWER = "xyes" ] ; then
                   sed 's/.*>\([^<]*\)<.*/\1/' |
                   sort | uniq); do
         case "x$pack" in
-            xtcl | xexpect | xdejagnu | xgcc* | *pass[12] | xvim |
+            xtcl | xexpect | xdejagnu | xgcc* | *pass[12] | xvim | \
             xshadow | xPython | xlinux-headers | xdbus | xsystemd )
 	        continue ;;
         esac
