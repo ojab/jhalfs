@@ -491,7 +491,7 @@ build_Makefile() {           #
 (
     cat << EOF
 
-all:	ck_UID mk_SETUP mk_LUSER mk_SUDO mk_CHROOT mk_BOOT create-sbu_du-report mk_BLFS_TOOL mk_CUSTOM_TOOLS
+all:	ck_UID ck_terminal mk_SETUP mk_LUSER mk_SUDO mk_CHROOT mk_BOOT create-sbu_du-report mk_BLFS_TOOL mk_CUSTOM_TOOLS
 $teardownat
 	@sudo make do_housekeeping
 EOF
@@ -530,6 +530,16 @@ ck_UID:
 	@if [ \`id -u\` = "0" ]; then \\
 	  echo "--------------------------------------------------"; \\
 	  echo "You cannot run this makefile from the root account"; \\
+	  echo "--------------------------------------------------"; \\
+	  exit 1; \\
+	fi
+
+ck_terminal:
+	@stty size | read LINES COLUMNS; \\
+	if (( LINES < 24 )) || (( COLUMNS < 80 )) ; then \\
+	  echo "--------------------------------------------------"; \\
+	  echo "Terminal too small: \$\$COLUMNS columns x \$\$LINES lines";\\
+	  echo "Minimum: 80 columns x 24 lines";\\
 	  echo "--------------------------------------------------"; \\
 	  exit 1; \\
 	fi
