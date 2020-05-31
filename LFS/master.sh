@@ -535,14 +535,14 @@ ck_UID:
 	fi
 
 ck_terminal:
-	@stty size | read LINES COLUMNS; \\
-	if (( LINES < 24 )) || (( COLUMNS < 80 )) ; then \\
+	@stty size | ( read L C; \\
+	if (( L < 24 )) || (( C < 80 )) ; then \\
 	  echo "--------------------------------------------------"; \\
-	  echo "Terminal too small: \$\$COLUMNS columns x \$\$LINES lines";\\
+	  echo "Terminal too small: \$\$C columns x \$\$L lines";\\
 	  echo "Minimum: 80 columns x 24 lines";\\
 	  echo "--------------------------------------------------"; \\
 	  exit 1; \\
-	fi
+	fi )
 
 mk_SETUP:
 	@\$(call echo_SU_request)
