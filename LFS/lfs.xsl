@@ -1080,16 +1080,31 @@ LOGLEVEL="</xsl:text>
 
   <xsl:template name="comment-test">
     <xsl:param name="instructions" select="''"/>
+    <xsl:param name="eof-seen" select="false()"/>
     <xsl:choose>
       <xsl:when test="contains($instructions,'&#xA;')">
         <xsl:call-template name="comment-test">
           <xsl:with-param name="instructions"
                           select="substring-before($instructions,'&#xA;')"/>
+          <xsl:with-param name="eof-seen" select="$eof-seen"/>
         </xsl:call-template>
-        <xsl:call-template name="comment-test">
-          <xsl:with-param name="instructions"
-                          select="substring-after($instructions,'&#xA;')"/>
-        </xsl:call-template>
+        <xsl:choose>
+          <xsl:when test="contains(substring-before($instructions,'&#xA;'),
+                                   'EOF')">
+            <xsl:call-template name="comment-test">
+              <xsl:with-param name="instructions"
+                              select="substring-after($instructions,'&#xA;')"/>
+              <xsl:with-param name="eof-seen" select="not($eof-seen)"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:call-template name="comment-test">
+              <xsl:with-param name="instructions"
+                              select="substring-after($instructions,'&#xA;')"/>
+              <xsl:with-param name="eof-seen" select="$eof-seen"/>
+            </xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:when>
       <xsl:otherwise>
         <xsl:if test="$testsuite = '0' or
@@ -1108,21 +1123,28 @@ LOGLEVEL="</xsl:text>
             <xsl:choose>
               <xsl:when test="contains(string(), 'make -k')">
                 <xsl:value-of select="$instructions"/>
-                <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1 || true&#xA;</xsl:text>
+                <xsl:if test="not($eof-seen)">
+                  <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1 || true</xsl:text>
+                </xsl:if>
+                <xsl:text>&#xA;</xsl:text>
               </xsl:when>
               <xsl:when test="contains($instructions, 'make')">
                 <xsl:value-of select="substring-before($instructions, 'make')"/>
                 <xsl:text>make -k</xsl:text>
                 <xsl:value-of select="substring-after($instructions, 'make')"/>
-                <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1 || true&#xA;</xsl:text>
+                <xsl:if test="not($eof-seen)">
+                  <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1 || true</xsl:text>
+                </xsl:if>
+                <xsl:text>&#xA;</xsl:text>
               </xsl:when>
               <xsl:otherwise>
                 <xsl:value-of select="$instructions"/>
                 <xsl:if
                   test="not(contains($instructions, '&gt;&gt;')) and
+                        not($eof-seen) and
                         substring($instructions,
                                   string-length($instructions)) != '\'">
-                  <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1</xsl:text>
+                  <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1 || true</xsl:text>
                 </xsl:if>
                 <xsl:text>&#xA;</xsl:text>
               </xsl:otherwise>
@@ -1133,11 +1155,15 @@ LOGLEVEL="</xsl:text>
             <xsl:choose>
               <xsl:when test="contains($instructions, 'make -k')">
                 <xsl:value-of select="$instructions"/>
-                <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1 || true&#xA;</xsl:text>
+                <xsl:if test="not($eof-seen)">
+                  <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1 || true</xsl:text>
+                </xsl:if>
+                <xsl:text>&#xA;</xsl:text>
               </xsl:when>
               <xsl:otherwise>
                 <xsl:value-of select="$instructions"/>
                 <xsl:if test="not(contains($instructions, '&gt;&gt;')) and
+                        not($eof-seen) and
                         substring($instructions,
                                   string-length($instructions)) != '\'">
                   <xsl:text> &gt;&gt; $TEST_LOG 2&gt;&amp;1</xsl:text>
