@@ -36,8 +36,10 @@ run_make() {                 #
     # Build the system
     if [ -e "$MKFILE" ] ; then
       echo -ne "Building the system...\n"
+      if { echo try tty; tty; }; then
       cd "$JHALFSDIR" && make
       echo -ne "done\n"
+      else echo there is no terminal!!; fi
     fi
   fi
 }

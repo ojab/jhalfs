@@ -368,7 +368,7 @@ if [[ "$OPTIMIZE" != "0" ]]; then
   load_file optimize/opt_config 'Loading optimization config'
   # The number of parallel jobs is taken from configuration now
   # shellcheck disable=SC2034
-  MAKEFLAGS="-j${N_PARALLEL}"
+  JH_MAKEFLAGS="-j${N_PARALLEL}"
   # Validate optimize settings, if required
   validate_opt_settings
 fi

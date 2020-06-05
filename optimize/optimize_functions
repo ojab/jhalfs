@@ -18,9 +18,8 @@ validate_opt_settings() {          # Show optimize setting and wait user agreeme
   echo -e "expected, please rebuild without optimizations before"
   echo -e "asking for support.${OFF}\n"
 
-  echo -e "MAKEFLAGS: ${L_arrow}${BOLD}${MAKEFLAGS}${OFF}${R_arrow}"
-  [[ "$MAKEFLAGS" = "unset" ]] && echo
-  [[ "$MAKEFLAGS" != "unset" ]] && \
+  echo -e "MAKEFLAGS: ${L_arrow}${BOLD}${JH_MAKEFLAGS}${OFF}${R_arrow}"
+  [ -n "$JH_MAKEFLAGS" ] && \
   echo -e "BLACK_LIST: ${L_arrow}${BOLD}${BLACK_LIST}${OFF}${R_arrow}\n"
 
   echo -e "DEF_OPT_MODE: ${L_arrow}${BOLD}${DEF_OPT_MODE}${OFF}${R_arrow}\n"
@@ -78,13 +77,13 @@ wrt_makeflags() {                  # Apply MAKEFLAGS to build
   if [[ "$BLACK_LIST" =~ ${pkg} ]]; then
     MKF=unset
   else
-    MKF=$MAKEFLAGS
+    MKF=$JH_MAKEFLAGS
   fi
 
   if [[ "$MKF" != "unset" ]]; then
 (
 cat << EOF
-	@echo "export MAKEFLAGS=\"$MAKEFLAGS\"" >> envars
+	@echo "export MAKEFLAGS=\"$JH_MAKEFLAGS\"" >> envars
 EOF
 ) >> $MKFILE.tmp
   fi
