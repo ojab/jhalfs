@@ -102,35 +102,40 @@ otherwise it is in /bin.-->
       </xsl:otherwise>
     </xsl:choose>
   </xsl:variable>
+
+<!-- Start of templates -->
   <xsl:template match="/">
-    <xsl:apply-templates select="//sect1[not(@revision) or
-                                         @revision=$revision]"/>
+    <xsl:apply-templates select="//chapter[
+                                @id='chapter-final-preps' or
+                                @id='chapter-cross-tools' or
+                                @id='chapter-temporary-tools' or
+                                @id='chapter-chroot-temporary-tools' or
+                                @id='chapter-building-system' or
+                                @id='chapter-config' or
+                                @id='chapter-bootscripts' or
+                                @id='chapter-bootable']"/>
+  </xsl:template>
+
+  <xsl:template match="chapter">
+    <xsl:apply-templates select="./sect1[
+             (not(@revision) or @revision=$revision) and
+             .//screen[(not(@role) or @role != 'nodump') and
+                       (not(@revision) or @revision=$revision)]/
+                          userinput[not(starts-with(string(),'chroot'))]]">
+      <xsl:with-param name="chap-num" select="position()+3"/>
+    </xsl:apply-templates>
+<!-- The last condition is a hack to allow old versions of the
+     book where the chroot commands did not have role="nodump".
+     It only works if the chroot command is the only one on the page -->
   </xsl:template>
 
   <xsl:template match="sect1">
-<!-- Since this xsl:if tag encloses the whole template, it would
-     be much better to transpose this condition to the select part
-     of the "calling" apply-template. But that would change the numbering,
-     so that it would be difficult to compare to previous versions. So for
-     version 2.4, let us keep this -->
-    <xsl:if test="(../@id='chapter-temporary-tools' or
-                   ../@id='chapter-final-preps' or
-                   ../@id='chapter-building-system' or
-                   ../@id='chapter-bootscripts' or
-                   ../@id='chapter-config' or
-                   ../@id='chapter-bootable') and
-                  (sect2[not(@revision) or @revision=$revision]//..|.)/
-                      screen[(not(@role) or @role != 'nodump') and
-                             (not(@revision) or @revision=$revision)]/
-                          userinput[not(starts-with(string(),'chroot'))]">
-<!-- The last condition is a hack to allow previous versions of the
-     book where the chroot commands did not have role="nodump".
-     It only works if the chroot command is the only one on the page -->
-        <!-- The dirs names -->
-      <xsl:variable name="pi-dir" select="../processing-instruction('dbhtml')"/>
-      <xsl:variable name="pi-dir-value" select="substring-after($pi-dir,'dir=')"/>
-      <xsl:variable name="quote-dir" select="substring($pi-dir-value,1,1)"/>
-      <xsl:variable name="dirname" select="substring-before(substring($pi-dir-value,2),$quote-dir)"/>
+    <xsl:param name="chap-num" select="'1'"/>
+    <!-- The dirs names -->
+    <xsl:variable name="pi-dir" select="../processing-instruction('dbhtml')"/>
+    <xsl:variable name="pi-dir-value" select="substring-after($pi-dir,'dir=')"/>
+    <xsl:variable name="quote-dir" select="substring($pi-dir-value,1,1)"/>
+    <xsl:variable name="dirname" select="substring-before(substring($pi-dir-value,2),$quote-dir)"/>
    <!-- The file names -->
     <xsl:variable name="pi-file" select="processing-instruction('dbhtml')"/>
     <xsl:variable name="pi-file-value" select="substring-after($pi-file,'filename=')"/>
@@ -138,32 +143,29 @@ otherwise it is in /bin.-->
     <!-- The build order -->
     <xsl:variable name="position" select="position()"/>
     <xsl:variable name="order">
-      <xsl:choose>
-        <xsl:when test="string-length($position) = 1">
-          <xsl:text>00</xsl:text>
-          <xsl:value-of select="$position"/>
-        </xsl:when>
-        <xsl:when test="string-length($position) = 2">
-          <xsl:text>0</xsl:text>
-          <xsl:value-of select="$position"/>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$position"/>
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:value-of select="$chap-num"/>
+      <xsl:if test="string-length($position) = 1">
+        <xsl:text>0</xsl:text>
+      </xsl:if>
+      <xsl:value-of select="$position"/>
     </xsl:variable>
     <!-- Inclusion of package manager scriptlets -->
-    <xsl:if test="@id='ch-tools-stripping' and $pkgmngt='y'">
+    <xsl:if test="@id='ch-tools-stripping' and
+                  $pkgmngt='y' and
+                  $bashdir='/tools'">
       <xsl:apply-templates
-              select="document('packageManager.xml')//sect1[contains(@id,'ch-tools')]"
-              mode="pkgmngt">
+        select="document('packageManager.xml')//sect1[contains(@id,'ch-tools')]"
+        mode="pkgmngt">
         <xsl:with-param name="order" select="$order"/>
         <xsl:with-param name="dirname" select="$dirname"/>
       </xsl:apply-templates>
     </xsl:if>
-    <xsl:if test="@id='ch-system-strippingagain' and $pkgmngt='y'">
+    <xsl:if test="@id='ch-system-strippingagain' and
+                  $pkgmngt='y' and
+                  $bashdir='/tools'">
       <xsl:apply-templates
-              select="document('packageManager.xml')//sect1[contains(@id,'ch-system')]"
+              select="document('packageManager.xml')//sect1[
+                                              contains(@id,'ch-system')]"
               mode="pkgmngt">
         <xsl:with-param name="order" select="$order"/>
         <xsl:with-param name="dirname" select="$dirname"/>
@@ -214,7 +216,6 @@ otherwise it is in /bin.-->
       </xsl:if>
       <xsl:text>exit&#xA;</xsl:text>
     </exsl:document>
-    </xsl:if>
   </xsl:template>
 
   <xsl:template match="sect2">
