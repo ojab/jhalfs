@@ -458,7 +458,7 @@ if [[ "$REBUILD_MAKEFILE" = "n" ]] ; then
 # the position of gcc-pass2 (chapter 6 or 5) tells us (not valid for
 # cross-chap5 branch).
   if (( TEST == 3 )) && \
-     [ -f "$JHALFSDIR/${PROGNAME}-commands/chapter06/gcc-pass2.xml" ]; then
+     [ -f "$BOOK/chapter06/gcc-pass2.xml" ]; then
         TEST=2
   fi
   extract_commands
