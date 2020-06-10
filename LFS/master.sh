@@ -10,53 +10,97 @@
 #############################################################
 
 
-#----------------------------#
-chapter4_Makefiles() {       #
-#----------------------------#
-  echo "${tab_}${GREEN}Processing... ${L_arrow}Chapter4     ( SETUP ) ${R_arrow}"
-  # Ensure the first dependency is empty
-  unset PREV
+#-------------------------#
+chapter_targets() {       #
+#-------------------------#
+# $1 is the chapter number. Pad it with 0 to the left to obtain a 2-digit
+# number:
+  printf -v dir chapter%02d $1
 
-  for file in chapter04/* ; do
+  echo "${tab_}${GREEN}Processing... ${L_arrow}Chapter $1${R_arrow}"
+
+  for file in $dir/* ; do
     # Keep the script file name
     this_script=`basename $file`
 
-    # First append each name of the script files to a list (this will become
-    # the names of the targets in the Makefile
-    # DO NOT append the settingenvironment script, it need be run as luser.
-    # A hack is necessary: create script in chap4 BUT run as a dependency for
-    # LUSER target
+    # Some scripts need peculiar actions:
+    # - glibc chap 5: ix locales creation when running chapter05 testsuites
+    # - Stripping at the end of system build: lfs.xsl does not generate
+    #   correct commands if the user does not want to strip, so skip it
+    #   in this case
+    # - grub config: must be done manually; skip it
+    # - handle fstab and .config. Skip kernel if .config not supplied
     case "${this_script}" in
-      *settingenvironment) chapter5="$chapter5 ${this_script}" ;;
-                        *) chapter4="$chapter4 ${this_script}" ;;
+      5*glibc)         [[ "${TEST}" = "3" ]] && \
+                       sed -i 's@/usr/lib/locale@/tools/lib/locale@' $file ;;
+      *strippingagain) [[ "${STRIP}" = "n" ]] && continue ;;
+      8*grub)          (( nb_chaps == 5 )) && continue ;;
+      10*grub)         continue ;;
+      *fstab)          [[ -z "${FSTAB}" ]] ||
+                       [[ ${FSTAB} == $BUILDDIR/sources/fstab ]] ||
+                       cp ${FSTAB} $BUILDDIR/sources/fstab ;;
+      *kernel)         [[ -z ${CONFIG} ]] && continue
+                       [[ ${CONFIG} == $BUILDDIR/sources/kernel-config ]] ||
+                       cp ${CONFIG} $BUILDDIR/sources/kernel-config  ;;
     esac
 
+    # Append the name of the script to a list. The name of the
+    # list is contained in the variable Makefile_target. We adjust this
+    # variable at various points. Note that it is initialized to "SETUP"
+    # in the main function, before calling this function for the first time.
+    case "${this_script}" in
+      *settingenvironment) Makefile_target=LUSER_TGT  ;;
+      *changingowner     ) Makefile_target=SUDO_TGT   ;;
+      *creatingdirs      ) Makefile_target=CHROOT_TGT ;;
+      *bootscripts       ) Makefile_target=BOOT_TGT   ;; # case of sysv    book
+      *network           ) Makefile_target=BOOT_TGT   ;; # case of systemd book
+    esac
+    eval $Makefile_target=\"\$$Makefile_target ${this_script}\"
+
     # Grab the name of the target
-    name=`echo ${this_script} | sed -e 's@[0-9]\{3\}-@@'`
+    name=`echo ${this_script} | sed -e 's@[0-9]\{3,4\}-@@' \
+                                    -e 's@-pass[0-9]\{1\}@@' \
+                                    -e 's@-libstdc++@@'`
 
     #--------------------------------------------------------------------#
     #         >>>>>>>> START BUILDING A Makefile ENTRY <<<<<<<<          #
     #--------------------------------------------------------------------#
     #
+    # Find the name of the tarball and the version of the package
+    pkg_tarball=$(sed -n 's/tar -xf \(.*\)/\1/p' $file)
+    pkg_version=$(sed -n 's/VERSION=\(.*\)/\1/p' $file)
 
     # Drop in the name of the target on a new line, and the previous target
     # as a dependency. Also call the echo_message function.
-    LUSER_wrt_target "${this_script}" "$PREV"
+    case $Makefile_target in
+      CHROOT_TGT)  CHROOT_wrt_target "${this_script}" "$PREV" "$pkg_version" ;;
+      *)            LUSER_wrt_target "${this_script}" "$PREV" "$pkg_version" ;;
+    esac
 
+    # If $pkg_tarball isn't empty, we've got a package...
+    if [ "$pkg_tarball" != "" ] ; then
+      # Touch timestamp file if installed files logs shall be created.
+      # But only for the final install chapter
+      if [ "${INSTALL_LOG}" = "y" ] && (( 1+nb_chaps <= $1 )) ; then
+        CHROOT_wrt_TouchTimestamp
+      fi
+      # Always initialize the test log file, since the test instructions may
+      # be "uncommented" by the user
+      case $Makefile_target in
+       CHROOT_TGT)  CHROOT_wrt_test_log "${this_script}" "$pkg_version" ;;
+       LUSER_TGT )  LUSER_wrt_test_log  "${this_script}" "$pkg_version" ;;
+      esac
+
+      # If using optimizations, write the instructions
+      case "${OPTIMIZE}$1${nb_chaps}${this_script}${REALSBU}" in
+          0* | *binutils-pass1y | 15* | 167* | 177*) ;;
+          *kernel) wrt_makeflags "$name" ;; # No CFLAGS for kernel
+          *) wrt_optimize "$name" && wrt_makeflags "$name" ;;
+      esac
+    fi
+
+# Some scriptlet have a special treatment; otherwise standard
     case "${this_script}" in
-      *settingenvironment)
-(
-cat << EOF
-	@cd && \\
-	function source() { true; } && \\
-	export -f source && \\
-	\$(CMDSDIR)/`dirname $file`/\$@ >> \$(LOGDIR)/\$@ 2>&1 && \\
-	sed 's|/mnt/lfs|\$(MOUNT_PT)|' -i .bashrc && \\
-	echo source $JHALFSDIR/envars >> .bashrc
-	@\$(PRT_DU) >>logs/\$@
-EOF
-) >> $MKFILE.tmp
-	      ;;
       *addinguser)
 (
 cat << EOF
@@ -74,8 +118,44 @@ cat << EOF
 EOF
 ) >> $MKFILE.tmp
 	      ;;
-      *)                   wrt_RunAsRoot "$file" ;;
+      *settingenvironment)
+(
+cat << EOF
+	@cd && \\
+	function source() { true; } && \\
+	export -f source && \\
+	\$(CMDSDIR)/`dirname $file`/\$@ >> \$(LOGDIR)/\$@ 2>&1 && \\
+	sed 's|/mnt/lfs|\$(MOUNT_PT)|' -i .bashrc && \\
+	echo source $JHALFSDIR/envars >> .bashrc
+	@\$(PRT_DU) >>logs/\$@
+EOF
+) >> $MKFILE.tmp
+	      ;;
+      *fstab) if [[ -n "$FSTAB" ]]; then
+                CHROOT_wrt_CopyFstab
+              else
+                CHROOT_wrt_RunAsRoot "$file"
+              fi
+              ;;
+
+      *) 
+         # Insert date and disk usage at the top of the log file, the script
+         # run and date and disk usage again at the bottom of the log file.
+         case "${Makefile_target}" in
+           SETUP_TGT | SUDO_TGT)  wrt_RunAsRoot "$file" "$pkg_version" ;;
+           LUSER_TGT)             LUSER_wrt_RunAsUser "$file" "$pkg_version" ;;
+           CHROOT_TGT | BOOT_TGT) CHROOT_wrt_RunAsRoot "$file" "$pkg_version" ;;
+         esac
+	      ;;
     esac
+
+    # Write installed files log and remove the build directory(ies)
+    # except if the package build fails.
+    if [ "$pkg_tarball" != "" ] ; then
+      if [ "${INSTALL_LOG}" = "y" ] && (( 1+nb_chaps <= $1 )) ; then
+        CHROOT_wrt_LogNewFiles "$name"
+      fi
+    fi
 
     # Include a touch of the target name so make can check
     # if it's already been made.
@@ -87,11 +167,10 @@ EOF
 
     # Keep the script file name for Makefile dependencies.
     PREV=${this_script}
-  done  # end for file in chapter04/*
+  done  # end for file in $dir/*
 }
 
-
-
+# NOT USED -- NOT USED
 #----------------------------#
 chapter5_Makefiles() {
 #----------------------------#
@@ -111,12 +190,6 @@ chapter5_Makefiles() {
   for file in chapter05/* ; do
     # Keep the script file name
     this_script=`basename $file`
-
-    # Fix locales creation when running chapter05 testsuites (ugly)
-    case "${this_script}" in
-      *glibc)     [[ "${TEST}" = "3" ]] && \
-                  sed -i 's@/usr/lib/locale@/tools/lib/locale@' $file ;;
-    esac
 
     # Append each name of the script files to a list that Makefile_target
     # points to. But before that, change Makefile_target at the first script
@@ -187,7 +260,7 @@ chapter5_Makefiles() {
   done  # end for file in chapter05/*
 }
 
-
+# NOT USED -- NOT USED keep for ICA code
 #----------------------------#
 chapter6_Makefiles() {
 #----------------------------#
@@ -333,7 +406,7 @@ chapter6_Makefiles() {
     system_build="$chapter6"
   fi
 }
-
+# NOT USED -- NOT USED
 #----------------------------#
 chapter78_Makefiles() {
 #----------------------------#
@@ -426,8 +499,6 @@ chapter78_Makefiles() {
 
 }
 
-
-
 #----------------------------#
 build_Makefile() {           #
 #----------------------------#
@@ -436,17 +507,36 @@ build_Makefile() {           #
 
   cd $JHALFSDIR/${PROGNAME}-commands
 
-  # Start with a clean Makefile.tmp file
+  # Start with empty files
   >$MKFILE
+  >$MKFILE.tmp
 
-  chapter4_Makefiles
-  chapter5_Makefiles
-  # Add the save target, if needed
-  [[ "$SAVE_CH5" = "y" ]] && wrt_save_target $Makefile_target
-  chapter6_Makefiles
-  # Add the iterations targets, if needed
-  [[ "$COMPARE" = "y" ]] && wrt_compare_targets
-  chapter78_Makefiles
+  # Ensure the first dependency is empty
+  unset PREV
+
+  # We begin with the SETUP target; successive targets will be assigned in
+  # the chapter_targets function.
+  Makefile_target=SETUP_TGT
+
+  # We need to know the chapter numbering, which depends on the version
+  # of the book. Use the number of subdirs to know which version we have
+  chaps=($(echo *))
+  nb_chaps=${#chaps[*]} # 5 if classical version, 7 if new version
+# DEBUG
+#  echo chaps: ${chaps[*]}
+#  echo nb_chaps: $nb_chaps
+# end DEBUG
+
+  # Make a temporary file with all script targets
+  for (( i = 4; i < nb_chaps+4; i++ )); do
+    chapter_targets $i
+    if (( i ==  nb_chaps )); then : # we have finished temporary tools
+      # Add the save target, if needed
+      [[ "$SAVE_CH5" = "y" ]] && wrt_save_target $Makefile_target
+    fi
+    # TODO Add the iterations targets, if needed
+    #  [[ "$COMPARE" = "y" ]] && wrt_compare_targets
+  done
   # Add the CUSTOM_TOOLS targets, if needed
   [[ "$CUSTOM_TOOLS" = "y" ]] && wrt_CustomTools_target
 
@@ -612,9 +702,9 @@ chroot: devices
 	sudo \$(CHROOT2)
 	\$(MAKE) teardown
 
-SETUP:        $chapter4
-LUSER:        $chapter5
-SUDO:         $runasroot
+SETUP:        $SETUP_TGT
+LUSER:        $LUSER_TGT
+SUDO:         $SUDO_TGT
 EOF
 ) >> $MKFILE
 if [ "$INITSYS" = systemd ]; then
@@ -629,10 +719,9 @@ fi
 (
     cat << EOF
 CHROOT:       SHELL=\$(filter %bash,\$(CHROOT1))
-CHROOT:       $chapter6
-BOOT:         $chapter78
+CHROOT:       $CHROOT_TGT
+BOOT:         $BOOT_TGT
 CUSTOM_TOOLS: $custom_list
-
 
 create-sbu_du-report:  mk_BOOT
 	@\$(call echo_message, Building)

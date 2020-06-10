@@ -197,7 +197,7 @@ extract_commands() {         #
                  $BOOK/index.xml >> $LOGDIR/$LOG 2>&1
 # Remove flags requesting user action in some cases. Much easier here than
 # in the stylesheet...
-        sed -i 's/-iv /-v /' ./${PROGNAME}-commands/chapter08/*kernel*
+        sed -i 's/-iv /-v /' ./${PROGNAME}-commands/chapter??/*kernel*
       ;;
     *)  echo -n " ${L_arrow}${PROGNAME}${R_arrow} book invalid, terminate build... "
         exit 1 ;;
@@ -315,7 +315,7 @@ create_kernfs_scripts() {    #
                $BOOK/*/kernfs.xml >> $LOGDIR/$LOG 2>&1
       xsltproc --nonet \
                -o kernfs-scripts/teardown.sh kernfs.xsl \
-               $BOOK/chapter09/reboot.xml >> $LOGDIR/$LOG 2>&1
+               $BOOK/chapter??/reboot.xml >> $LOGDIR/$LOG 2>&1
       ;;
     *)
   esac
