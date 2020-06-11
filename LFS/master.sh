@@ -94,7 +94,7 @@ chapter_targets() {       #
       # If using optimizations, write the instructions
       case "${OPTIMIZE}$1${nb_chaps}${this_script}${REALSBU}" in
           0* | *binutils-pass1y | 15* | 167* | 177*) ;;
-          *kernel) wrt_makeflags "$name" ;; # No CFLAGS for kernel
+          *kernel*) wrt_makeflags "$name" ;; # No CFLAGS for kernel
           *) wrt_optimize "$name" && wrt_makeflags "$name" ;;
       esac
     fi
