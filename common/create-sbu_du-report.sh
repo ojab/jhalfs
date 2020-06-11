@@ -50,13 +50,15 @@ echo -e "\n\t\tMemory info:\n" >> "$REPORT"
 free >> "$REPORT"
 
 # Parse only that logs that have time data
-BUILDLOGS="`grep -l "^Totalseconds:" ${LOGSDIR}/*`"
+pushd ${LOGSDIR}
+BUILDLOGS="`grep -l "^Totalseconds:" * | sort -n`"
 
 # Match the first timed log to extract the SBU unit value from it
-FIRSTLOG=`grep -l "^Totalseconds:" $LOGSDIR/* | head -n1`
-BASELOG=`grep -l "^Totalseconds:" $LOGSDIR/???-binutils* | head -n1`
+FIRSTLOG=`grep -l "^Totalseconds:" * | sort -n | head -n1`
+BASELOG=`grep -l "^Totalseconds:" ???-binutils* | head -n1`
 echo -e "\nUsing ${BASELOG#*[[:digit:]]-} to obtain the SBU unit value."
 SBU_UNIT=`sed -n 's/^Totalseconds:\s\([[:digit:]]*\)$/\1/p' $BASELOG`
+popd
 echo -e "\nThe SBU unit value is equal to $SBU_UNIT seconds.\n"
 echo -e "\n\n$LINE\n\nThe SBU unit value is equal to $SBU_UNIT seconds.\n" >> "$REPORT"
 
@@ -73,7 +75,7 @@ for log in $BUILDLOGS ; do
 
 # Start SBU calculation
 # Build time
-  TIME=`sed -n 's/^Totalseconds:\s\([[:digit:]]*\)$/\1/p' $log`
+  TIME=`sed -n 's/^Totalseconds:\s\([[:digit:]]*\)$/\1/p' ${LOGSDIR}/$log`
   SECS=`perl -e 'print ('$TIME' % '60')';`
   MINUTES=`perl -e 'printf "%.0f" , (('$TIME' - '$SECS') / '60')';`
   SBU=`perl -e 'printf "%.1f" , ('$TIME' / '$SBU_UNIT')';`
@@ -83,10 +85,10 @@ for log in $BUILDLOGS ; do
 
 # Start disk usage calculation
 # Disk usage before unpacking the package
-  DU1=`grep "^KB: " $log | head -n1 | cut -f1 | sed -e 's/KB: //'`
+  DU1=`grep "^KB: " ${LOGSDIR}/$log | head -n1 | cut -f1 | sed -e 's/KB: //'`
   DU1MB=`perl -e 'printf "%.3f" , ('$DU1' / '1024')';`
 # Disk usage before deleting the source and build dirs
-  DU2=`grep "^KB: " $log | tail -n1 | cut -f1 | sed -e 's/KB: //'`
+  DU2=`grep "^KB: " ${LOGSDIR}/$log | tail -n1 | cut -f1 | sed -e 's/KB: //'`
   DU2MB=`perl -e 'printf "%.3f" , ('$DU2' / '1024')';`
 # Calculate disk space required to do the build
   REQUIRED1=`perl -e 'print ('$DU2' - '$DU1')';`
