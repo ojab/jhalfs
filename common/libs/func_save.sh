@@ -6,8 +6,8 @@ wrt_save_target() {            #
 
     local target
     case $1 in
-        runasroot) target=SUDO ;;
-        chapter6 ) target=CHROOT ;;
+        SUDO_TGT   ) target=SUDO ;;
+        CHROOT_TGT ) target=CHROOT ;;
     esac
     CHROOT_wrt_target save-ch5 "$PREV";
     wrt_save_work $target
