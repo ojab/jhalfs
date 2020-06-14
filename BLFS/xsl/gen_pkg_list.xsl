@@ -31,9 +31,9 @@
         <name>LFS Packages</name>
         <xsl:text>&#xA;    </xsl:text>
         <sublist>
-          <xsl:attribute name="id">lfs-6</xsl:attribute>
+          <xsl:attribute name="id">lfs-system</xsl:attribute>
           <xsl:text>&#xA;      </xsl:text>
-          <name>LFS Chapter 6</name>
+          <name>LFS Final System</name>
           <xsl:apply-templates
                select='document($lfs-full)//
                             chapter[@id="chapter-building-system"]/
@@ -41,26 +41,26 @@
           <xsl:text>&#xA;    </xsl:text>
         </sublist>
         <sublist>
-          <xsl:attribute name="id">lfs-7</xsl:attribute>
+          <xsl:attribute name="id">lfs-conf</xsl:attribute>
           <xsl:text>&#xA;      </xsl:text>
-          <name>LFS Chapter 7</name>
+          <name>LFS Configuration files</name>
           <xsl:apply-templates
                select='document($lfs-full)//
-                            chapter[@id="chapter-bootscripts"]/
+                            chapter[@id="chapter-config"]/
                                  sect1/sect1info[./productname="bootscripts"]'/>
           <xsl:text>&#xA;    </xsl:text>
         </sublist>
         <sublist>
-          <xsl:attribute name="id">lfs-8</xsl:attribute>
+          <xsl:attribute name="id">lfs-boot</xsl:attribute>
           <xsl:text>&#xA;      </xsl:text>
-          <name>LFS Chapter 8</name>
+          <name>LFS Making Bootable</name>
           <xsl:apply-templates select='document($lfs-full)//chapter[@id="chapter-bootable"]/sect1/sect1info[./productname="kernel"]'/>
           <xsl:text>&#xA;    </xsl:text>
         </sublist>
         <sublist>
-          <xsl:attribute name="id">lfs-9</xsl:attribute>
+          <xsl:attribute name="id">lfs-theend</xsl:attribute>
           <xsl:text>&#xA;      </xsl:text>
-          <name>LFS Chapter 9</name>
+          <name>LFS The end</name>
           <xsl:apply-templates select='document($lfs-full)//sect1[@id="ch-finish-theend"]//userinput[starts-with(string(),"echo")]'/>
           <xsl:text>&#xA;    </xsl:text>
         </sublist>

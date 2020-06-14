@@ -40,7 +40,7 @@
                       $package='shadow'"/>
       <xsl:when test="$package='bootscripts'">
         <xsl:for-each select="document($lfsbook)">
-          <xsl:apply-templates select="key('idlfs',$package)[ancestor::chapter/@id='chapter-bootscripts']" mode="lfs"/>
+          <xsl:apply-templates select="key('idlfs',$package)[ancestor::chapter/@id='chapter-config']" mode="lfs"/>
         </xsl:for-each>
       </xsl:when>
       <xsl:when test="$package='kernel'">
