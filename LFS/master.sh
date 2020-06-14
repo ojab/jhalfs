@@ -17,23 +17,49 @@ chapter_targets() {       #
 # number:
   printf -v dir chapter%02d $1
 
-  echo "${tab_}${GREEN}Processing... ${L_arrow}Chapter $1${R_arrow}"
+# $2 contains the build number if rebuilding for ICA
+  if [[ -z "$2" ]] ; then
+    local N=""
+  else
+    local N=-build_$2
+    local CHROOT_TGT=""
+    mkdir ${dir}$N
+    cp ${dir}/* ${dir}$N
+    for script in ${dir}$N/* ; do
+      # Overwrite existing symlinks, files, and dirs
+      sed -e 's/ln *-sv/&f/g' \
+          -e 's/mv *-v/&f/g' \
+          -e 's/mkdir *-v/&p/g' -i ${script}
+      # Rename the scripts
+      mv ${script} ${script}$N
+    done
+    # Remove Bzip2 binaries before make install (LFS-6.2 compatibility)
+    sed -e 's@make install@rm -vf /usr/bin/bz*\n&@' -i ${dir}$N/*-bzip2$N
+    # Remove openssl-<version> from /usr/share/doc (LFS-9.x), because
+    # otherwise the mv command creates an openssl directory.
+    sed -e 's@mv -v@rm -rfv /usr/share/doc/openssl-*\n&@' \
+        -i ${dir}$N/*-openssl$N
+  fi
 
-  for file in $dir/* ; do
+  echo "${tab_}${GREEN}Processing... ${L_arrow}Chapter $1$N${R_arrow}"
+
+  for file in ${dir}$N/* ; do
     # Keep the script file name
     this_script=`basename $file`
 
     # Some scripts need peculiar actions:
-    # - glibc chap 5: ix locales creation when running chapter05 testsuites
+    # - glibc chap 5: fix locales creation when running chapter05 testsuites
     # - Stripping at the end of system build: lfs.xsl does not generate
     #   correct commands if the user does not want to strip, so skip it
     #   in this case
+    # - do not reinstall linux-headers when rebuilding
     # - grub config: must be done manually; skip it
     # - handle fstab and .config. Skip kernel if .config not supplied
     case "${this_script}" in
       5*glibc)         [[ "${TEST}" = "3" ]] && \
                        sed -i 's@/usr/lib/locale@/tools/lib/locale@' $file ;;
       *strippingagain) [[ "${STRIP}" = "n" ]] && continue ;;
+      *linux-headers*) [[ -n "$N" ]] && continue ;;
       8*grub)          (( nb_chaps == 5 )) && continue ;;
       10*grub)         continue ;;
       *fstab)          [[ -z "${FSTAB}" ]] ||
@@ -43,6 +69,24 @@ chapter_targets() {       #
                        [[ ${CONFIG} == $BUILDDIR/sources/kernel-config ]] ||
                        cp ${CONFIG} $BUILDDIR/sources/kernel-config  ;;
     esac
+    # Grab the name of the target
+    name=`echo ${this_script} | sed -e 's@[0-9]\{3,4\}-@@' \
+                                    -e 's@-pass[0-9]\{1\}@@' \
+                                    -e 's@-libstdc++@@' \
+                                    -e 's,'$N',,'`
+
+    # Find the name of the tarball and the version of the package
+    # If it doesn't exist, we skip it in iterations rebuilds (except stripping
+    # and revisedchroot, where .a and .la files are removed).
+    pkg_tarball=$(sed -n 's/tar -xf \(.*\)/\1/p' $file)
+    pkg_version=$(sed -n 's/VERSION=\(.*\)/\1/p' $file)
+
+    if [[ "$pkg_tarball" = "" ]] && [[ -n "$N" ]] ; then
+      case "${this_script}" in
+        *stripping*|*revised*) ;;
+        *)  continue ;;
+      esac
+    fi
 
     # Append the name of the script to a list. The name of the
     # list is contained in the variable Makefile_target. We adjust this
@@ -57,18 +101,9 @@ chapter_targets() {       #
     esac
     eval $Makefile_target=\"\$$Makefile_target ${this_script}\"
 
-    # Grab the name of the target
-    name=`echo ${this_script} | sed -e 's@[0-9]\{3,4\}-@@' \
-                                    -e 's@-pass[0-9]\{1\}@@' \
-                                    -e 's@-libstdc++@@'`
-
     #--------------------------------------------------------------------#
     #         >>>>>>>> START BUILDING A Makefile ENTRY <<<<<<<<          #
     #--------------------------------------------------------------------#
-    #
-    # Find the name of the tarball and the version of the package
-    pkg_tarball=$(sed -n 's/tar -xf \(.*\)/\1/p' $file)
-    pkg_version=$(sed -n 's/VERSION=\(.*\)/\1/p' $file)
 
     # Drop in the name of the target on a new line, and the previous target
     # as a dependency. Also call the echo_message function.
@@ -80,8 +115,10 @@ chapter_targets() {       #
     # If $pkg_tarball isn't empty, we've got a package...
     if [ "$pkg_tarball" != "" ] ; then
       # Touch timestamp file if installed files logs shall be created.
-      # But only for the final install chapter
-      if [ "${INSTALL_LOG}" = "y" ] && (( 1+nb_chaps <= $1 )) ; then
+      # But only for the final install chapter and not when rebuilding it
+      if [ "${INSTALL_LOG}" = "y" ] &&
+         (( 1+nb_chaps <= $1 )) &&
+         [ "x$N" = x ] ; then
         CHROOT_wrt_TouchTimestamp
       fi
       # Always initialize the test log file, since the test instructions may
@@ -152,7 +189,9 @@ EOF
     # Write installed files log and remove the build directory(ies)
     # except if the package build fails.
     if [ "$pkg_tarball" != "" ] ; then
-      if [ "${INSTALL_LOG}" = "y" ] && (( 1+nb_chaps <= $1 )) ; then
+      if [ "${INSTALL_LOG}" = "y" ] &&
+         (( 1+nb_chaps <= $1 )) &&
+         [ "x${N}" = "x" ] ; then
         CHROOT_wrt_LogNewFiles "$name"
       fi
     fi
@@ -167,7 +206,17 @@ EOF
 
     # Keep the script file name for Makefile dependencies.
     PREV=${this_script}
+    # Set "system_build" var for iteration targets
+    if [ -z "$N" ] && (( 1+nb_chaps == $1 )); then
+      system_build="$system_build $this_script"
+    fi
+
   done  # end for file in $dir/*
+  # Set "system_build" when rebuilding: note the CHROOT_TGT is local
+  # in that case.
+  if [ -n "$N" ]; then
+    system_build="$CHROOT_TGT"
+  fi
 }
 
 # NOT USED -- NOT USED
@@ -534,8 +583,10 @@ build_Makefile() {           #
       # Add the save target, if needed
       [[ "$SAVE_CH5" = "y" ]] && wrt_save_target $Makefile_target
     fi
-    # TODO Add the iterations targets, if needed
-    #  [[ "$COMPARE" = "y" ]] && wrt_compare_targets
+    if (( i ==  1+nb_chaps )); then : # we have finished final system
+      # Add the iterations targets, if needed
+      [[ "$COMPARE" = "y" ]] && wrt_compare_targets $i
+    fi
   done
   # Add the CUSTOM_TOOLS targets, if needed
   [[ "$CUSTOM_TOOLS" = "y" ]] && wrt_CustomTools_target

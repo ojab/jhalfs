@@ -8,8 +8,9 @@ wrt_compare_targets() {            #
                                           # and "ITERATIONS" with no "$".
     ITERATION=iteration-$N
     if [ "$N" != "1" ] ; then
-      wrt_system_build "$N" "$PREV_IT"
+      wrt_system_build "$1" "$N" "$PREV_IT"
     fi
+    # add needed Makefile target
     this_script=$ITERATION
     CHROOT_wrt_target "$ITERATION" "$PREV"
     wrt_compare_work "$ITERATION" "$PREV_IT"
@@ -18,31 +19,42 @@ wrt_compare_targets() {            #
     PREV_IT=$ITERATION
     PREV=$ITERATION
   done
+  # We need to prevent "userdel" in all iterations but the last
+  # We need to access the scriptlets in "dir"
+  local dir
+  printf -v dir chapter%02d "$1"
+
+  sed -i '/userdel/d' $dir/*revised*
+  for (( N = 2; N < ITERATIONS; N++ )); do
+     sed -i '/userdel/d' $dir-build_$N/*revised*
+  done
+
 }
 
 #----------------------------------#
 wrt_system_build() {               #
 #----------------------------------#
-  local     RUN=$1
-  local PREV_IT=$2
+  local    CHAP=$1
+  local     RUN=$2
+  local PREV_IT=$3
 
   if [[ "$PROGNAME" = "clfs" ]] ; then
     final_system_Makefiles $RUN
   else
-    chapter6_Makefiles $RUN
+    chapter_targets $CHAP $RUN
   fi
 
   if [[ "$PROGNAME" = "clfs" ]] ; then
     basicsystem="$basicsystem $PREV_IT $system_build"
   else
-    chapter6="$chapter6 $PREV_IT $system_build"
+    CHROOT_TGT="$CHROOT_TGT $PREV_IT $system_build"
   fi
 
   if [[ "$RUN" = "$ITERATIONS" ]] ; then
     if [[ "$PROGNAME" = "clfs" ]] ; then
       basicsystem="$basicsystem iteration-$RUN"
     else
-      chapter6="$chapter6 iteration-$RUN"
+      CHROOT_TGT="$CHROOT_TGT iteration-$RUN"
     fi
   fi
 }
@@ -73,7 +85,6 @@ EOF
       wrt_do_ica_work "$PREV_IT" "$ITERATION" "$DEST_ICA"
     fi
   fi
-
 }
 
 #----------------------------------#
