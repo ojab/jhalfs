@@ -45,7 +45,7 @@ fi
 
 # Dump CPU and memory info
 echo -e "\n\n\t\tCPU type:\n" >> "$REPORT"
-cat /proc/cpuinfo >> "$REPORT"
+lscpu >> "$REPORT"
 echo -e "\n\t\tMemory info:\n" >> "$REPORT"
 free >> "$REPORT"
 
