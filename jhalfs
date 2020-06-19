@@ -101,7 +101,7 @@ load_file() {
 
 version="
 ${BOLD}  \"jhalfs\"${OFF} builder tool (development) \$Rev$
- \$Date$ 
+ \$Date$
 
   Copyright (C) 2005-2019, the jhalfs team:
     Jeremy Huntwork

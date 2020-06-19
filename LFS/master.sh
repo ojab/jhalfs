@@ -175,7 +175,7 @@ EOF
               fi
               ;;
 
-      *) 
+      *)
          # Insert date and disk usage at the top of the log file, the script
          # run and date and disk usage again at the bottom of the log file.
          case "${Makefile_target}" in
