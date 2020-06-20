@@ -209,7 +209,10 @@ extract_commands() {         #
   chmod -R +x $JHALFSDIR/${PROGNAME}-commands
 
   # Create the packages file. We need it for proper Makefile creation
+  # lfs does not use this anymore, but thei is taken care in the
+  # funtion body
   create_package_list
+  # On the other hand, lfs needs two auxiliary files
   if [ "${PROGNAME}" = lfs ]; then
     create_chroot_scripts
     create_kernfs_scripts
@@ -227,7 +230,7 @@ create_package_list() {      #
   # Create the packages file. We need it for proper Makefile creation
   rm -f pkg_tarball_list
   echo -n "Creating <${PROGNAME}> list of tarball names for $BOOK"
-  if [ ! -z $ARCH ] ; then echo -n " $ARCH" ; fi
+  if [ ! -z "$ARCH" ] ; then echo -n " $ARCH" ; fi
   echo -n "... "
   case ${PROGNAME} in
     clfs*)
@@ -245,12 +248,7 @@ create_package_list() {      #
                  $BOOK/chapter04/chapter04.xml >>$LOGDIR/$LOG 2>&1
       ;;
     lfs)
-        xsltproc --nonet --xinclude                \
-                 --stringparam pkgmngt "$PKGMNGT"  \
-                 --stringparam revision "$INITSYS" \
-                 --output pkg_tarball_list         \
-                 packages.xsl                      \
-                 $BOOK/chapter03/chapter03.xml >>$LOGDIR/$LOG 2>&1
+        # lfs does not use the package list anymore
       ;;
     *)
   esac

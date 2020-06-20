@@ -70,10 +70,12 @@ chapter_targets() {       #
                        cp ${CONFIG} $BUILDDIR/sources/kernel-config  ;;
     esac
     # Grab the name of the target
+    # This is only use to check the name in "opt_override" or "BLACKIST"
     name=`echo ${this_script} | sed -e 's@[0-9]\{3,4\}-@@' \
                                     -e 's@-pass[0-9]\{1\}@@' \
                                     -e 's@-libstdc++@@' \
-                                    -e 's,'$N',,'`
+                                    -e 's,'$N',,' \
+                                    -e 's@-32@@'`
 
     # Find the name of the tarball and the version of the package
     # If it doesn't exist, we skip it in iterations rebuilds (except stripping
@@ -192,7 +194,7 @@ EOF
       if [ "${INSTALL_LOG}" = "y" ] &&
          (( 1+nb_chaps <= $1 )) &&
          [ "x${N}" = "x" ] ; then
-        CHROOT_wrt_LogNewFiles "$name"
+        CHROOT_wrt_LogNewFiles "${this_script}"
       fi
     fi
 
@@ -485,7 +487,7 @@ restore-luser:
 	@\$(call housekeeping)
 
 do_housekeeping:
-	@-rm /tools
+	@-rm -f /tools
 
 EOF
 ) >> $MKFILE

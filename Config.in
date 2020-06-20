@@ -13,7 +13,7 @@ menu "BOOK Settings"
         config    BOOK_LFS
             bool "Linux From Scratch System V"
             help
-                Set up the tools to build LFS with Sys V init.
+                Set up the tools to build LFS with SysV init.
 
         config    BOOK_LFS_SYSD
             bool "Linux From Scratch systemd"
@@ -47,9 +47,9 @@ menu "BOOK Settings"
     prompt "Init system"
 
         config BLFS_SYSV
-        bool "BLFS Sys V"
+        bool "BLFS SysV"
         help
-            Extract the Sys V flavour of the BLFS book
+            Extract the SysV flavour of the BLFS book
 
         config BLFS_SYSD
         bool "BLFS systemd"
