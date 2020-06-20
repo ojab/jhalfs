@@ -10,10 +10,6 @@
 
 <!-- Parameters -->
 
-  <!-- which revision attribute to include: can only be sysv or systemd,
-       but we leave checking to the caller-->
-  <xsl:param name="revision" select="'sysv'"/>
-
   <!-- use package management ?
        n = no, original behavior
        y = yes, add PKG_DEST to scripts in install commands of chapter06-08
@@ -118,9 +114,7 @@ otherwise it is in /bin.-->
 
   <xsl:template match="chapter">
     <xsl:apply-templates select="./sect1[
-             (not(@revision) or @revision=$revision) and
-             .//screen[(not(@role) or @role != 'nodump') and
-                       (not(@revision) or @revision=$revision)]/
+             .//screen[not(@role) or @role != 'nodump']/
                           userinput[not(starts-with(string(),'chroot'))]]">
       <xsl:with-param name="chap-num" select="position()+3"/>
     </xsl:apply-templates>
@@ -190,12 +184,9 @@ otherwise it is in /bin.-->
           <xsl:with-param name="order" select="$order"/>
         </xsl:call-template>
       </xsl:if>
-      <xsl:apply-templates select="sect2[not(@revision) or
-                                         @revision=$revision] |
-                                   screen[(not(@role) or
-                                           @role!='nodump') and
-                                          (not(@revision) or
-                                           @revision=$revision)]/userinput"/>
+      <xsl:apply-templates
+           select="sect2 |
+                   screen[not(@role) or @role!='nodump']/userinput"/>
       <xsl:if test="@id='ch-system-creatingdirs' and $pkgmngt='y'">
         <xsl:apply-templates
            select="document('packageManager.xml')//sect1[
@@ -220,10 +211,7 @@ otherwise it is in /bin.-->
 
   <xsl:template match="sect2">
     <xsl:apply-templates
-      select=".//screen[(not(@role) or
-                         @role != 'nodump') and
-                        (not(@revision) or
-                         @revision=$revision)]/userinput[
+      select=".//screen[not(@role) or @role != 'nodump']/userinput[
                              @remap = 'pre' or
                              @remap = 'configure' or
                              @remap = 'make' or
@@ -256,10 +244,8 @@ esac
       </xsl:choose>
     </xsl:if>
     <xsl:apply-templates
-         select=".//screen[(not(@role) or
-                            @role != 'nodump') and
-                           (not(@revision) or
-                            @revision=$revision)]/userinput[@remap = 'install']"/>
+         select=".//screen[not(@role) or @role != 'nodump']/
+                       userinput[@remap = 'install']"/>
     <xsl:if test="ancestor::chapter[@id != 'chapter-temporary-tools'] and
                   descendant::screen[not(@role) or
                                      @role != 'nodump']/userinput[
@@ -345,17 +331,12 @@ fi
       </xsl:choose>
     </xsl:if>
     <xsl:apply-templates
-       select=".//screen[
-                (not(@role) or
-                 @role != 'nodump') and
-                (not(@revision) or
-                 @revision=$revision)
-                        ]/userinput[
+       select=".//screen[not(@role) or @role != 'nodump']/userinput[
                        not(@remap) or
                        @remap='adjust' or
                        @remap='test' and current()/../@id='ch-tools-dejagnu' or
                        @remap='test' and current()/../@id='ch-system-systemd'
-                                   ]"/>
+                                                                   ]"/>
     <xsl:if test="../@id='ch-system-ncurses' and $ncurses5='y'">
       <xsl:apply-templates select=".//screen[@role='nodump']"/>
     </xsl:if>

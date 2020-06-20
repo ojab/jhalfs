@@ -156,15 +156,27 @@ extract_commands() {         #
       ;;
     lfs)
         echo -n " ${L_arrow}${BOLD}LFS${R_arrow} build... "
+        # The scripts pages are xincluded by the book, so must
+        # be generated for running xsltproc
         pushd $BOOK > /dev/null
         if [ -f process-scripts.sh ]; then
           bash process-scripts.sh >> $LOGDIR/$LOG 2>&1
         fi
         popd > /dev/null
 
+        # First profile the book, for revision and arch. Note that
+        # MULTIBLIB is set to "default" if pure 64 bit book. In this
+        # profiling on arch is useless, but does not hurt either.
         xsltproc --nonet                                      \
                  --xinclude                                   \
-                 --stringparam revision       "$INITSYS"      \
+                 --stringparam profile.revision "$INITSYS"    \
+                 --stringparam profile.arch     "$MULTILIB"   \
+                 --output prbook.xml                          \
+                 $BOOK/stylesheets/lfs-xsl/profile.xsl        \
+                 $BOOK/index.xml >> $LOGDIR/$LOG 2>&1
+
+        # Use the profiled book for generating the scriptlets
+        xsltproc --nonet                                      \
                  --stringparam testsuite      "$TEST"         \
                  --stringparam bomb-testsuite "$BOMB_TEST"    \
                  --stringparam ncurses5       "$NCURSES5"     \
@@ -194,7 +206,7 @@ extract_commands() {         #
                  --stringparam script-root    "$SCRIPT_ROOT"  \
                  --output ./${PROGNAME}-commands/             \
                  $XSL                                         \
-                 $BOOK/index.xml >> $LOGDIR/$LOG 2>&1
+                 prbook.xml >> $LOGDIR/$LOG 2>&1
 # Remove flags requesting user action in some cases. Much easier here than
 # in the stylesheet...
         sed -i 's/-iv /-v /' ./${PROGNAME}-commands/chapter??/*kernel*

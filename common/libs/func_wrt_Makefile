@@ -420,10 +420,9 @@ EOF
 #----------------------------------#
 LUSER_wrt_LogNewFiles() {          #
 #----------------------------------#
-  local name=`echo ${1} | sed 's/[0-9]-//'`
 (
 cat << EOF
-	@\$(call log_new_files_LUSER,$name)
+	@\$(call log_new_files_LUSER,$1)
 EOF
 ) >> $MKFILE.tmp
 }
@@ -431,10 +430,9 @@ EOF
 #----------------------------------#
 CHROOT_wrt_LogNewFiles() {         #
 #----------------------------------#
-  local name=`echo ${1} | sed 's/[0-9]-//'`
 (
 cat << EOF
-	@\$(call log_new_files,$name)
+	@\$(call log_new_files,$1)
 EOF
 ) >> $MKFILE.tmp
 }
