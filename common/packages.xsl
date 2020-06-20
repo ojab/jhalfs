@@ -20,7 +20,11 @@
   <xsl:param name="revision" select="'sysv'"/>
 
   <xsl:template match="/">
-    <xsl:apply-templates select="//para"/>
+    <xsl:apply-templates
+         select="//varlistentry[(@condition=$model   or not(@condition)) and
+                                (@revision=$revision or not(@revision))  and
+                                (@vendor=$kernel     or not(@vendor))]
+                      //para[contains(string(),'Download:')]"/>
     <xsl:if test="$pkgmngt='y'">
       <xsl:apply-templates
         select="document('packageManager.xml')//sect1[@id='package']//para"/>
@@ -28,21 +32,13 @@
   </xsl:template>
 
   <xsl:template match="para">
-    <xsl:if test="contains(string(),'Download:') and
-                  (ancestor::varlistentry[@condition=$model]
-                  or not(ancestor::varlistentry[@condition])) and
-                  (ancestor::varlistentry[@revision=$revision]
-                  or not(ancestor::varlistentry[@revision])) and
-                  (ancestor::varlistentry[@vendor=$kernel]
-                  or not(ancestor::varlistentry[@vendor]))">
       <xsl:call-template name="package_name">
         <xsl:with-param name="url" select="ulink/@url"/>
       </xsl:call-template>
-    </xsl:if>
   </xsl:template>
 
   <xsl:template name="package_name">
-    <xsl:param name="url" select="foo"/>
+    <xsl:param name="url" select="'foo'"/>
     <xsl:variable name="sub-url" select="substring-after($url,'/')"/>
     <xsl:choose>
       <xsl:when test="contains($sub-url,'/') and
