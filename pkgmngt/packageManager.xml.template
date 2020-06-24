@@ -16,6 +16,7 @@ it in html -->
 <!-- First section for the tarball download address.
 Only the next four lines are mandatory, but you can add anything
 to make the text look more like the LFS book.
+You can add several packages (see packageManager.xml.pacman)
 Do not change  anything, except the url and the md5 checksum. -->
 <sect1 id="package">
         <para>Download: <ulink url="http://your/package-manager/url"/></para>
@@ -29,11 +30,76 @@ Do not change  anything, except the url and the md5 checksum. -->
 </sect1>
 -->
 
-<!-- Do not change the next line. The name of the scriptlet will be taken
-from the dbhtml instruction: it is the name of the file less .html, with
-xxx-x-added before (x, digits). -->
+<!-- We have three groups of sections with installation instructions:
+  -  the one with id ch-tools-xxx is for old book, where
+     the package manager (and its needed deps) is built as user
+     lfs in /tools
+  -  the one with id ch-chroot-xxx is for new book, where the
+     package manager (and its needed deps) is built temporarily
+     in chroot
+  -  the one with id ch-system-xxx is for both book, when the
+     package manager (and its deps) is rebuilt with instructions
+     to make a package of it.
+
+     Do not change the next line, except the -pkgmngt part.
+     The name of the scriptlet will be taken from the dbhtml instruction:
+     it is the name of the file less .html, with xxx-x-added before
+     (x, digits). -->
 <sect1 id="ch-tools-pkgmngt" role="wrap">
-  <?dbhtml filename="dpkg.html"?>
+  <?dbhtml filename="pkgmngt.html"?>
+<!-- the next lines are now mandatory for unpacking the tarball at the
+     beginning of the scriptlet -->
+  <sect1info condition="script">
+    <productname>dpkg</productname>
+    <productnumber>x.y.z</productnumber><!-- version -->
+    <address>http://where/is/your/package</address><!-- url -->
+  </sect1info>
+<!-- next line mandatory without change, but feel free to add any title,
+other sect2 (with different role), sectinfo and so on -->
+  <sect2 role="installation">
+<!-- You can use any number of remap="pre", "configure", "make", "test", "install"
+<screen><userinput remap="something">Instructions</userinput></screen>.
+They are executed in that order. "pre" can be used for patching for example.
+In case testing is enabled, the instructions flagged test are logged to a different
+file (test-log). If testing is not enabled, they are not executed at all. Do not
+put line breaks before and after your instructions. <userinput> without
+remap attribute are considered configuration instructions and executed last. You
+can also use remap="adjust" for the same purpose. -->
+<screen><userinput remap="configure">./configure --prefix=/tools \
+    --disable-nls --without-dselect \
+    --without-start-stop-daemon \
+    --without-update-alternatives \
+    --without-install-info \
+    --without-zlib --with-bz2=static --without-selinux</userinput></screen>
+
+<screen><userinput remap="make">(cd lib  &amp;&amp; make)
+(cd src &amp;&amp; make)
+(cd dpkg-deb &amp;&amp; make)
+(cd dpkg-split &amp;&amp; make)</userinput></screen>
+
+<screen><userinput remap="install">cp src/dpkg src/dpkg-* /tools/bin
+cp dpkg-deb/dpkg-deb /tools/bin
+cp dpkg-split/dpkg-split /tools/bin
+mkdir -pv /tools/etc/dpkg/{,dpkg.cfg.d}
+cp debian/dpkg.cfg /tools/etc/dpkg</userinput></screen>
+
+<screen><userinput>cat &gt;&gt; /tools/etc/dpkg/dpkg.cfg &lt;&lt; EOF
+# admindir on LFS system
+admindir /var/lib/dpkg
+EOF</userinput></screen>
+
+<screen><userinput>cat &gt;&gt; /tools/etc/dpkg/dpkg.cfg &lt;&lt; EOF
+# disable fatal error on path checking
+force-bad-path
+EOF</userinput></screen>
+
+  </sect2>
+
+</sect1>
+
+<!-- for new book, at the end of chapter 7 -->
+<sect1 id="ch-chroot-pkgmngt" role="wrap">
+  <?dbhtml filename="pkgmngt.html"?>
 <!-- the next lines are now mandatory for unpacking the tarball at the
      beginning of the scriptlet -->
   <sect1info condition="script">
@@ -95,7 +161,9 @@ any explaining <title>Title</title> and <para>explanations</para> -->
 mkdir -pv /var/lib/packages</userinput></screen>
 
 </sect1>
-<!-- Same for files. Do not change the following line -->
+<!-- Same for files. Do not change the following line.
+     Those instructions are not executed for the new book.
+     If needed create files at the end of the temp install. -->
 <sect1 id="ch-pkgmngt-createfiles">
 
 <screen><userinput>touch /var/lib/dpkg/{available,status}
@@ -106,6 +174,8 @@ touch /var/log/dpkg.log</userinput></screen>
 <!-- Last but not least : Final instructions for installing the
 package manager at the end of chapter 6. Again, the scriptlet file name is
 taken from the dbhtml instruction, with digits added before and .html cut.
+There can be any number of sections for dependencies, all with id
+ch-system-xxx (all the id's must be different).
 -->
 <sect1 id="ch-system-pkgmngt" role="wrap">
   <?dbhtml filename="dpkg.html"?>

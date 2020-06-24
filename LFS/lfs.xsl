@@ -143,28 +143,6 @@ otherwise it is in /bin.-->
       </xsl:if>
       <xsl:value-of select="$position"/>
     </xsl:variable>
-    <!-- Inclusion of package manager scriptlets -->
-    <xsl:if test="@id='ch-tools-stripping' and
-                  $pkgmngt='y' and
-                  $bashdir='/tools'">
-      <xsl:apply-templates
-        select="document('packageManager.xml')//sect1[contains(@id,'ch-tools')]"
-        mode="pkgmngt">
-        <xsl:with-param name="order" select="$order"/>
-        <xsl:with-param name="dirname" select="$dirname"/>
-      </xsl:apply-templates>
-    </xsl:if>
-    <xsl:if test="@id='ch-system-strippingagain' and
-                  $pkgmngt='y' and
-                  $bashdir='/tools'">
-      <xsl:apply-templates
-              select="document('packageManager.xml')//sect1[
-                                              contains(@id,'ch-system')]"
-              mode="pkgmngt">
-        <xsl:with-param name="order" select="$order"/>
-        <xsl:with-param name="dirname" select="$dirname"/>
-      </xsl:apply-templates>
-    </xsl:if>
     <!-- Creating dirs and files -->
     <exsl:document href="{$dirname}/{$order}-{$filename}" method="text">
       <xsl:text>#!</xsl:text>
@@ -187,14 +165,16 @@ otherwise it is in /bin.-->
       <xsl:apply-templates
            select="sect2 |
                    screen[not(@role) or @role!='nodump']/userinput"/>
-      <xsl:if test="@id='ch-system-creatingdirs' and $pkgmngt='y'">
+      <xsl:if test="contains(@id,'creatingdirs') and $pkgmngt='y'">
         <xsl:apply-templates
            select="document('packageManager.xml')//sect1[
                                        @id='ch-pkgmngt-creatingdirs'
                                                         ]//userinput"
            mode="pkgmngt"/>
       </xsl:if>
-      <xsl:if test="@id='ch-system-createfiles' and $pkgmngt='y'">
+      <xsl:if test="contains(@id,'createfiles')
+                and $pkgmngt='y'
+                and $bashdir='/tools'">
         <xsl:apply-templates
            select="document('packageManager.xml')//sect1[
                                        @id='ch-pkgmngt-createfiles'
@@ -207,6 +187,40 @@ otherwise it is in /bin.-->
       </xsl:if>
       <xsl:text>exit&#xA;</xsl:text>
     </exsl:document>
+    <!-- Inclusion of package manager scriptlets -->
+    <xsl:if test="$pkgmngt='y' and
+                  following-sibling::sect1[1][@id='ch-tools-stripping']">
+      <xsl:choose>
+        <xsl:when test="$bashdir='/tools'">
+          <xsl:apply-templates
+            select="document('packageManager.xml')//sect1[
+                                              contains(@id,'ch-tools')]"
+            mode="pkgmngt">
+            <xsl:with-param name="order" select="$order+1"/>
+            <xsl:with-param name="dirname" select="$dirname"/>
+          </xsl:apply-templates>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates
+            select="document('packageManager.xml')//sect1[
+                                              contains(@id,'ch-chroot')]"
+            mode="pkgmngt">
+            <xsl:with-param name="order" select="$order+1"/>
+            <xsl:with-param name="dirname" select="$dirname"/>
+          </xsl:apply-templates>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
+    <xsl:if test="$pkgmngt='y' and
+                  following-sibling::sect1[2][@id='ch-system-strippingagain']">
+      <xsl:apply-templates
+              select="document('packageManager.xml')//sect1[
+                                              contains(@id,'ch-system')]"
+              mode="pkgmngt">
+        <xsl:with-param name="order" select="$order+1"/>
+        <xsl:with-param name="dirname" select="$dirname"/>
+      </xsl:apply-templates>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="sect2">
@@ -219,7 +233,9 @@ otherwise it is in /bin.-->
                              not(current()/../@id='ch-tools-dejagnu') and
                              not(current()/../@id='ch-system-systemd')]"/>
     <xsl:if
-         test="ancestor::chapter[@id != 'chapter-temporary-tools'] and
+         test="ancestor::chapter[@id = 'chapter-building-system' or
+                                 @id = 'chapter-config'          or
+                                 @id = 'chapter-bootable'] and
                $pkgmngt = 'y' and
                descendant::screen[not(@role) or
                                   @role != 'nodump']/userinput[
@@ -246,7 +262,9 @@ esac
     <xsl:apply-templates
          select=".//screen[not(@role) or @role != 'nodump']/
                        userinput[@remap = 'install']"/>
-    <xsl:if test="ancestor::chapter[@id != 'chapter-temporary-tools'] and
+    <xsl:if test="ancestor::chapter[@id = 'chapter-building-system' or
+                                    @id = 'chapter-config'          or
+                                    @id = 'chapter-bootable'] and
                   descendant::screen[not(@role) or
                                      @role != 'nodump']/userinput[
                                                        @remap='install']">
@@ -367,7 +385,7 @@ set -e
            select=".//screen[not(@role) or
                             @role != 'nodump']/userinput[@remap != 'adjust']"
            mode="pkgmngt"/>
-        <xsl:if test="$dirname = 'chapter06'">
+        <xsl:if test="$dirname = 'chapter06' or $dirname = 'chapter08'">
           <xsl:text>PREV_SEC=${SECONDS}
 packInstall
 SECONDS=${PREV_SEC}
@@ -1216,8 +1234,12 @@ PACKAGE=</xsl:text>
       <xsl:call-template name="basename">
         <xsl:with-param name="path" select=".//sect1info/address/text()"/>
       </xsl:call-template>
-      <xsl:if test = "( ../@id != 'chapter-temporary-tools' or
-                      starts-with(@id,'ch-system') ) and $pkgmngt = 'y'">
+      <xsl:if test = "( ../@id = 'chapter-building-system' or
+                        ../@id = 'chapter-config'         or
+                        ../@id = 'chapter-bootable'       or
+                        starts-with(@id,'ch-system') ) and $pkgmngt = 'y'">
+<!-- the last alternative for old books where some sections in
+     chapter-config had ch-system -->
         <xsl:text>
 source ${ROOT}${SCRIPT_ROOT}/packInstall.sh
 export -f packInstall</xsl:text>

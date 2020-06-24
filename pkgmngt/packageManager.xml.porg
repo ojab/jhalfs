@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id$ -->
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 <!ENTITY porg-version "0.10">
 <!ENTITY porg-url "https://sourceforge.net/projects/porg/files/porg-&porg-version;.tar.gz">
 <!ENTITY porg-md5 "2eceb8a73bb188dbb06b12d90cabdbb4">
+<!ENTITY porg-patch-url "http://www.linuxfromscratch.org/patches/downloads/porg/porg-0.10-renameat2-1.patch">
+<!ENTITY porg-patch-md5 "cfc72c817d98902afeaf225f22b8e653">
 ]>
 
 <article>
@@ -14,6 +15,12 @@
         <para>Download: <ulink url="&porg-url;"/></para>
         <para>MD5 sum: <literal>&porg-md5;</literal></para>
 </sect1>
+<sect1 id="patches">
+  <title>Package Information</title>
+        <para>Download: <ulink url="&porg-patch-url;"/></para>
+        <para>MD5 sum: <literal>&porg-patch-md5;</literal></para>
+</sect1>
+
 
 <sect1 id="ch-tools-pkgmngt" role="wrap">
   <?dbhtml filename="porg.html"?>
@@ -27,6 +34,7 @@
   <title>Porg in tools</title>
   <sect2 role="installation">
     <title>Instructions</title>
+<screen><userinput remap="pre">patch -Np1 -i ../porg-0.10-renameat2-1.patch</userinput></screen>
 <screen><userinput remap="configure">./configure --prefix=/tools \
            --disable-grop  \
            --with-porg-logdir=/tools/var/porg</userinput></screen>
@@ -69,6 +77,38 @@ mkdir -pv /var/lib/packages</userinput></screen>
   <screen><userinput>cp /tools/etc/porgrc /etc</userinput></screen>
 </sect1>
 
+<sect1 id="ch-chroot-pkgmngt" role="wrap">
+  <?dbhtml filename="porg.html"?>
+
+  <sect1info condition="script">
+    <productname>porg</productname>
+    <productnumber>&porg-version;</productnumber>
+    <address>&porg-url;</address>
+  </sect1info>
+
+  <title>Temporary Porg</title>
+  <sect2 role="installation">
+    <title>Instructions</title>
+
+<screen><userinput remap="pre">patch -Np1 -i ../porg-0.10-renameat2-1.patch</userinput></screen>
+<screen><userinput remap="configure">./configure --prefix=/usr     \
+            --disable-grop    \
+            --sysconfdir=/etc \
+            --with-porg-logdir=/var/lib/porg</userinput></screen>
+
+<screen><userinput remap="make">make</userinput></screen>
+
+<screen><userinput remap="install">make install
+mkdir -p /usr/share/bash-completion/completions
+mv /etc/bash_completion.d/porg* /usr/share/bash-completion/completions</userinput></screen>
+
+<screen><userinput>sed -e '/EXCLUDE/{s/^#//;s@$@:/sources:/home@}' \
+    -e '/LOGDIR/s/^#//' \
+    -i /etc/porgrc</userinput></screen>
+  </sect2>
+
+</sect1>
+
 <sect1 id="ch-system-pkgmngt" role="wrap">
   <?dbhtml filename="porg.html"?>
 
@@ -82,6 +122,7 @@ mkdir -pv /var/lib/packages</userinput></screen>
   <sect2 role="installation">
     <title>Instructions</title>
 
+<screen><userinput remap="pre">patch -Np1 -i ../porg-0.10-renameat2-1.patch</userinput></screen>
 <screen><userinput remap="configure">./configure --prefix=/usr     \
             --disable-grop    \
             --sysconfdir=/etc \
