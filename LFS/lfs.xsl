@@ -368,11 +368,17 @@ fi
     <xsl:variable name="pi-file" select="processing-instruction('dbhtml')"/>
     <xsl:variable name="pi-file-value" select="substring-after($pi-file,'filename=')"/>
     <xsl:variable name="filename" select="substring-before(substring($pi-file-value,2),'.html')"/>
+    <xsl:variable name="pos">
+      <xsl:if test="string-length(position()) = 1">
+        <xsl:text>0</xsl:text>
+      </xsl:if>
+      <xsl:value-of select="position()"/>
+    </xsl:variable>
      <!-- Creating dirs and files -->
     <xsl:if test="count(descendant::screen/userinput) &gt; 0 and
                   count(descendant::screen/userinput) &gt;
                       count(descendant::screen[@role='nodump'])">
-      <exsl:document href="{$dirname}/{$order}-{position()}-{$filename}"
+      <exsl:document href="{$dirname}/{$order}-{$pos}-{$filename}"
                      method="text">
         <xsl:text>#!/bin/bash
 set +h
