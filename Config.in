@@ -131,7 +131,7 @@ menu "BOOK Settings"
         config LFS_MULTILIB_NO
         bool "Standard LFS on i686 or amd64"
         help
-            Ues standard LFS book (choose this if not multilib source)
+            Use standard LFS book (choose this if not multilib source)
 
         config LFS_MULTILIB_I686
         bool "Multilib LFS on amd64 with i686 libraries"
