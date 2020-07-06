@@ -9,15 +9,20 @@ book if you prefer. That slightly changes the aspect if you render
 it in html -->
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
-<!ENTITY libarchive-version "3.1.2">
-<!ENTITY curl-version       "7.39.0">
-<!ENTITY pacman-version     "4.1.2">
-<!ENTITY libarchive-url "http://www.libarchive.org/downloads/libarchive-&libarchive-version;.tar.gz">
-<!ENTITY curl-url       "http://curl.haxx.se/download/curl-&curl-version;.tar.lzma">
+<!ENTITY libarchive-version "3.4.3">
+<!ENTITY curl-version       "7.71.1">
+<!ENTITY fakeroot-version   "1.24">
+<!ENTITY pacman-version     "5.2.2">
+<!ENTITY libarchive-url "https://github.com/libarchive/libarchive/releases/download/v&libarchive-version;/libarchive-&libarchive-version;.tar.xz">
+<!ENTITY curl-url       "https://curl.haxx.se/download/curl-&curl-version;.tar.xz">
+<!ENTITY fakeroot-url   "http://deb.debian.org/debian/pool/main/f/fakeroot/fakeroot_&fakeroot-version;.orig.tar.gz">
 <!ENTITY pacman-url     "https://sources.archlinux.org/other/pacman/pacman-&pacman-version;.tar.gz">
-<!ENTITY curl-md5       "e9aa6dec29920eba8ef706ea5823bad7">
-<!ENTITY libarchive-md5 "efad5a503f66329bb9d2f4308b5de98a">
-<!ENTITY pacman-md5     "063c8b0ff6bdf903dc235445525627cd">
+<!ENTITY curl-md5       "b54b386057846ce3edd3584b19741569">
+<!ENTITY libarchive-md5 "4b216ea3015ecf8ae555a2026f9a6b73">
+<!ENTITY fakeroot-md5   "964e5f438f1951e5a515dd54edd50fa6">
+<!ENTITY pacman-md5     "3a9b078a83996a3272844807b91959c6">
+<!ENTITY % general-entities SYSTEM "BOOK/general.ent">
+%general-entities;
 ]>
 
 
@@ -34,6 +39,8 @@ Do not change  anything, except the url and the md5 checksum. -->
   <title>All Packages</title>
         <para>Download: <ulink url="&curl-url;"/></para>
         <para>MD5 sum: <literal>&curl-md5;</literal></para>
+        <para>Download: <ulink url="&fakeroot-url;"/></para>
+        <para>MD5 sum: <literal>&fakeroot-md5;</literal></para>
         <para>Download: <ulink url="&libarchive-url;"/></para>
         <para>MD5 sum: <literal>&libarchive-md5;</literal></para>
         <para>Download: <ulink url="&pacman-url;"/></para>
@@ -74,6 +81,28 @@ xxx-x-added before (x, digits).-->
 
 </sect1>
 
+<sect1 id="ch-tools-openssl" role="wrap">
+  <?dbhtml filename="openssl.html"?>
+
+  <sect1info condition="script">
+    <productname>openssl</productname>
+    <productnumber>&openssl-version;</productnumber>
+    <address>&openssl-url;</address>
+  </sect1info>
+
+  <title>openssl-&openssl-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./config --prefix=/tools            \
+         --openssldir=/tools/etc/ssl \
+         --libdir=lib</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
 <sect1 id="ch-tools-curl" role="wrap">
   <?dbhtml filename="curl.html"?>
 
@@ -89,6 +118,45 @@ xxx-x-added before (x, digits).-->
     <title/>
 <screen><userinput remap="configure">./configure --prefix=/tools \
             --disable-static</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-tools-libcap" role="wrap">
+  <?dbhtml filename="libcap.html"?>
+
+  <sect1info condition="script">
+    <productname>libcap</productname>
+    <productnumber>&libcap-version;</productnumber>
+    <address>&libcap-url;</address>
+  </sect1info>
+
+  <title>libcap-&libcap-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="make">make lib=lib prefix=/tools GOLANG=no PAM_CAP=no</userinput></screen>
+<screen><userinput remap="install">make lib=lib prefix=/tools GOLANG=no PAM_CAP=no install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-tools-fakeroot" role="wrap">
+  <?dbhtml filename="fakeroot.html"?>
+
+  <sect1info condition="script">
+    <productname>fakeroot</productname>
+    <productnumber>&fakeroot-version;</productnumber>
+    <address>&fakeroot-url;</address>
+  </sect1info>
+
+  <title>fakeroot-&fakeroot-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/tools</userinput></screen>
 <screen><userinput remap="make">make</userinput></screen>
 <screen><userinput remap="install">make install</userinput></screen>
   </sect2>
@@ -116,17 +184,23 @@ file (test-log). If testing is not enabled, they are not executed at all. Do not
 put line breaks before and after your instructions. <userinput> without
 remap attribute are considered configuration instructions and executed last. You
 can also use remap="adjust" for the same purpose. -->
-<screen><userinput remap="configure">./configure --prefix=/tools \
-    --without-openssl \
-    PKG_CONFIG_PATH=/tools/lib/pkgconfig \
-    DUPATH=/tools/bin/du</userinput></screen>
+<screen><userinput remap="configure">mkdir build
+cd build
+meson --prefix=/tools                        \
+      --sysconfdir=/tools/etc                \
+      --localstatedir=/tools/var             \
+      -Dcrypto=openssl                       \
+      -Ddoc=disabled                         \
+      -Dgpgme=disabled                       \
+      -Dpkg_config_path=/tools/lib/pkgconfig</userinput></screen>
 
-<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="make">ninja</userinput></screen>
 
-<screen><userinput remap="install">make install</userinput></screen>
+<screen><userinput remap="install">ninja install</userinput></screen>
 
 <screen><userinput>sed -e 's@/usr@/tools@g' \
     -e 's/\([^!]\)strip/\1!strip/' \
+    -e 's/\([^!]\)libtool/\1!libtool/' \
     -e 's/\([^!]\)zipman/\1!zipman/' \
     -i /tools/etc/makepkg.conf
 cat &gt;&gt; /tools/etc/makepkg.conf &lt;&lt; EOF
@@ -146,6 +220,320 @@ EOF</userinput></screen>
 
 </sect1>
 
+<!-- version for new book: needs ninja and meson, which needs
+     Python rebuilt with libffi and zlib. Needs also pkg-config -->
+<sect1 id="ch-chroot-libarchive" role="wrap">
+  <?dbhtml filename="libarchive.html"?>
+
+  <sect1info condition="script">
+    <productname>libarchive</productname>
+    <productnumber>&libarchive-version;</productnumber>
+    <address>&libarchive-url;</address>
+  </sect1info>
+
+  <title>Libarchive-&libarchive-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/usr \
+            --without-bz2lib \
+            --without-xml2   \
+            --enable-bsdtar=static \
+            --enable-bsdcpio=static</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-openssl" role="wrap">
+  <?dbhtml filename="openssl.html"?>
+
+  <sect1info condition="script">
+    <productname>openssl</productname>
+    <productnumber>&openssl-version;</productnumber>
+    <address>&openssl-url;</address>
+  </sect1info>
+
+  <title>openssl-&openssl-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">
+./config --prefix=/usr         \
+         --openssldir=/etc/ssl \
+         --libdir=lib          \
+         shared</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-curl" role="wrap">
+  <?dbhtml filename="curl.html"?>
+
+  <sect1info condition="script">
+    <productname>curl</productname>
+    <productnumber>&curl-version;</productnumber>
+    <address>&curl-url;</address>
+  </sect1info>
+
+  <title>Curl-&curl-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/usr \
+            --disable-static</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-libcap" role="wrap">
+  <?dbhtml filename="libcap.html"?>
+
+  <sect1info condition="script">
+    <productname>libcap</productname>
+    <productnumber>&libcap-version;</productnumber>
+    <address>&libcap-url;</address>
+  </sect1info>
+
+  <title>libcap-&libcap-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="pre">sed -i '/install.*STACAPLIBNAME/d' libcap/Makefile</userinput></screen>
+<screen><userinput remap="make">make lib=lib</userinput></screen>
+<screen><userinput remap="install">make lib=lib PKGCONFIGDIR=/usr/lib/pkgconfig install
+chmod -v 755 /lib/libcap.so.&libcap-version;
+mv -v /lib/libpsx.a /usr/lib
+rm -v /lib/libcap.so
+ln -sfv ../../lib/libcap.so.2 /usr/lib/libcap.so</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-fakeroot" role="wrap">
+  <?dbhtml filename="fakeroot.html"?>
+
+  <sect1info condition="script">
+    <productname>fakeroot</productname>
+    <productnumber>&fakeroot-version;</productnumber>
+    <address>&fakeroot-url;</address>
+  </sect1info>
+
+  <title>fakeroot-&fakeroot-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/usr</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-zlib" role="wrap">
+  <?dbhtml filename="zlib.html"?>
+
+  <sect1info condition="script">
+    <productname>zlib</productname>
+    <productnumber>&zlib-version;</productnumber>
+    <address>&zlib-url;</address>
+  </sect1info>
+
+  <title>zlib-&zlib-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/usr</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install
+mv -v /usr/lib/libz.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libz.so) /usr/lib/libz.so</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-libffi" role="wrap">
+  <?dbhtml filename="libffi.html"?>
+
+  <sect1info condition="script">
+    <productname>libffi</productname>
+    <productnumber>&libffi-version;</productnumber>
+    <address>&libffi-url;</address>
+  </sect1info>
+
+  <title>libffi-&libffi-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/usr --disable-static --with-gcc-arch=native</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-python" role="wrap">
+  <?dbhtml filename="Python-pass2.html"?>
+
+  <sect1info condition="script">
+    <productname>Python</productname>
+    <productnumber>&python-version;</productnumber>
+    <address>&python-url;</address>
+  </sect1info>
+
+  <title>Python-&python-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/usr --without-ensurepip --enable-shared</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-ninja" role="wrap">
+  <?dbhtml filename="ninja.html"?>
+
+  <sect1info condition="script">
+    <productname>ninja</productname>
+    <productnumber>&ninja-version;</productnumber>
+    <address>&ninja-url;</address>
+  </sect1info>
+
+  <title>ninja-&ninja-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">python3 configure.py --bootstrap</userinput></screen>
+<screen><userinput remap="install">install -vm755 ninja /usr/bin/</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-meson" role="wrap">
+  <?dbhtml filename="meson.html"?>
+
+  <sect1info condition="script">
+    <productname>meson</productname>
+    <productnumber>&meson-version;</productnumber>
+    <address>&meson-url;</address>
+  </sect1info>
+
+  <title>meson-&meson-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="install">cp meson.py /usr/bin/meson
+cp -rv mesonbuild /usr/bin</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-pkgconfig" role="wrap">
+  <?dbhtml filename="pkgconfig.html"?>
+
+  <sect1info condition="script">
+    <productname>pkg-config</productname>
+    <productnumber>&pkgconfig-version;</productnumber>
+    <address>&pkgconfig-url;</address>
+  </sect1info>
+
+  <title>pkg-config-&pkgconfig-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/usr              \
+            --with-internal-glib       \
+            --disable-host-tool        \
+            --docdir=/usr/share/doc/pkg-config-&pkgconfig-version;</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-pkgmngt" role="wrap">
+  <?dbhtml filename="pacman.html"?>
+
+  <sect1info condition="script">
+    <productname>pacman</productname>
+    <productnumber>&pacman-version;</productnumber>
+    <address>&pacman-url;</address>
+  </sect1info>
+
+  <title>Pacman-&pacman-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">mkdir build
+cd build
+meson --prefix=/usr                        \
+      -Dcrypto=openssl                     \
+      -Ddoc=disabled                       \
+      -Dgpgme=disabled</userinput></screen>
+
+<screen><userinput remap="make">ninja</userinput></screen>
+
+<screen><userinput remap="install">ninja install</userinput></screen>
+
+<screen><userinput>sed -e 's/\([^!]\)strip/\1!strip/' \
+    -e 's/\([^!]\)libtool/\1!libtool/' \
+    -e 's/\([^!]\)zipman/\1!zipman/' \
+    -i /etc/makepkg.conf
+cat &gt;&gt; /etc/makepkg.conf &lt;&lt; EOF
+BUILDDIR=/sources
+PKGDEST=/var/lib/packages
+PACKAGER="Pierre Labastie &lt;lnimbus@club-internet.fr&gt;"
+EOF
+cat &gt;&gt; /etc/pacman.conf &lt;&lt; EOF
+DBPath   = /var/lib/pacman/
+CacheDir = /var/cache/pacman/pkg/
+LogFile  = /var/log/pacman.log
+SigLevel = Never
+# Repository: do not add one now: repo-add needs openssl.
+EOF
+chown tester:tester /var/lib/{packages,pacman}</userinput></screen>
+
+  </sect2>
+
+</sect1>
+
+<sect1 id="ch-chroot-shadow" role="wrap">
+  <?dbhtml filename="shadow.html"?>
+
+  <sect1info condition="script">
+    <productname>shadow</productname>
+    <productnumber>&shadow-version;</productnumber>
+    <address>&shadow-url;</address>
+  </sect1info>
+
+  <title>shadow-&shadow-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="pre">sed -i 's/groups$(EXEEXT) //' src/Makefile.in
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /'   {} \;
+find man -name Makefile.in -exec sed -i 's/getspnam\.3 / /' {} \;
+find man -name Makefile.in -exec sed -i 's/passwd\.5 / /'   {} \;
+sed -e 's:#ENCRYPT_METHOD DES:ENCRYPT_METHOD SHA512:' \
+    -e 's:/var/spool/mail:/var/mail:'                 \
+    -i etc/login.defs
+sed -i 's/1000/999/' etc/useradd</userinput></screen>
+<screen><userinput remap="configure">touch /usr/bin/passwd
+./configure --sysconfdir=/etc \
+            --with-group-name-max-length=32</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make install</userinput></screen>
+  </sect2>
+
+</sect1>
+
 <!-- Mandatory section for creating dirs. These instructions are added at the
 end of the creating dirs instructions of the book. Do not change the
 following line -->
@@ -161,7 +549,12 @@ following line -->
 
   <title>Creating Essential Files</title>
 
-<para>No file?</para>
+<screen><userinput>if ! grep -q tester /etc/passwd; then
+    echo "tester:x:101:101::/home/tester:/bin/bash" >> /etc/passwd
+    echo "tester:x:101:" >> /etc/group
+    install -o tester -d /home/tester
+fi
+chown tester:tester /var/lib/{packages,pacman}</userinput></screen>
 
 </sect1>
 
@@ -216,6 +609,27 @@ cp -v -R docs/*     $PKG_DEST/usr/share/doc/curl-&curl-version;</userinput></scr
   </sect2>
 
 </sect1>
+
+<sect1 id="ch-system-fakeroot" role="wrap">
+  <?dbhtml filename="fakeroot.html"?>
+
+  <sect1info condition="script">
+    <productname>fakeroot</productname>
+    <productnumber>&fakeroot-version;</productnumber>
+    <address>&fakeroot-url;</address>
+  </sect1info>
+
+  <title>fakeroot-&fakeroot-version;</title>
+
+  <sect2 role="installation">
+    <title/>
+<screen><userinput remap="configure">./configure --prefix=/usr</userinput></screen>
+<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="install">make DESTDIR=$PKG_DEST install</userinput></screen>
+  </sect2>
+
+</sect1>
+
 <sect1 id="ch-system-pkgmngt" role="wrap">
   <?dbhtml filename="pacman.html"?>
 
@@ -230,20 +644,22 @@ cp -v -R docs/*     $PKG_DEST/usr/share/doc/curl-&curl-version;</userinput></scr
   <sect2 role="installation">
     <title/>
 
-<screen><userinput remap="configure">./configure --prefix=/usr \
-            --sysconfdir=/etc \
-            --localstatedir=/var</userinput></screen>
+<screen><userinput remap="configure">mkdir build
+cd build
+meson --prefix=/usr \
+      -Dcrypto=openssl</userinput></screen>
 
-<screen><userinput remap="make">make</userinput></screen>
+<screen><userinput remap="make">ninja</userinput></screen>
 
 <!-- Those instructions are executed with PKG_DEST set. They are not processed
 in any way to add $PKG_DEST at some place, and the PKG_DEST directory is not
 populated before, so it is basically empty. You have thus to create any directory
 needed in $PKG_DEST and not otherwise created by the make install command. -->
-<screen><userinput remap="install">make DESTDIR=$PKG_DEST install</userinput></screen>
+<screen><userinput remap="install">DESTDIR=$PKG_DEST ninja install</userinput></screen>
 
 <screen><userinput>sed -e 's/\([^!]\)strip/\1!strip/' \
     -e 's/\([^!]\)zipman/\1!zipman/' \
+    -e 's/\([^!]\)libtool/\1!libtool/' \
     -i /etc/makepkg.conf
 cat &gt;&gt; /etc/makepkg.conf &lt;&lt; EOF
 BUILDDIR=/sources
