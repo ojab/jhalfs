@@ -235,6 +235,7 @@ otherwise it is in /bin.-->
     <xsl:if
          test="ancestor::chapter[@id = 'chapter-building-system' or
                                  @id = 'chapter-config'          or
+                                 @id = 'chapter-bootscripts'      or
                                  @id = 'chapter-bootable'] and
                $pkgmngt = 'y' and
                descendant::screen[not(@role) or
@@ -264,6 +265,7 @@ esac
                        userinput[@remap = 'install']"/>
     <xsl:if test="ancestor::chapter[@id = 'chapter-building-system' or
                                     @id = 'chapter-config'          or
+                                    @id = 'chapter-bootscripts'     or
                                     @id = 'chapter-bootable'] and
                   descendant::screen[not(@role) or
                                      @role != 'nodump']/userinput[
@@ -446,13 +448,14 @@ echo -e "\n\nTotalseconds: $SECONDS\n"
           <xsl:with-param name="instructions" select="string()"/>
         </xsl:call-template>
       </xsl:when>
-<!-- Package management -->
+<!-- Package management for installation chapters -->
 <!-- Add $PKG_DEST to installation commands -->
 <!-- Also add -j1 to make install -->
       <xsl:when test="@remap='install' and
-                      not(ancestor::chapter[
-                              @id='chapter-temporary-tools'
-                                           ])">
+                      ancestor::chapter[@id='chapter-building-system' or
+                                        @id = 'chapter-config'        or
+                                        @id = 'chapter-bootscripts'   or
+                                        @id = 'chapter-bootable']">
         <xsl:choose>
           <xsl:when test="$pkgmngt='n'">
             <xsl:choose>
@@ -559,8 +562,10 @@ unset OLD_PKGDIR
 </xsl:text>
       </xsl:when><!-- addition for tzdata + package management -->
       <!-- End addition for package management -->
-      <!-- add -j1 to make install in chapter 5 -->
-      <xsl:when test="ancestor::chapter[@id='chapter-temporary-tools'] and
+      <!-- add -j1 to make install in non final chapters -->
+      <xsl:when test="ancestor::chapter[@id='chapter-temporary-tools'        or
+                                        @id='chapter-chroot-temporary-tools' or
+                                        @id='chapter-cross-tools'] and
                       @remap='install'">
         <xsl:choose>
           <xsl:when test="contains(string(),'make ')">
@@ -573,7 +578,7 @@ unset OLD_PKGDIR
           </xsl:otherwise>
         </xsl:choose>
         <xsl:text>&#xA;</xsl:text>
-      </xsl:when><!-- chapter 5 install -->
+      </xsl:when><!-- temp chapters install -->
       <!-- The rest of commands -->
       <xsl:otherwise>
         <xsl:apply-templates/>
@@ -1241,8 +1246,9 @@ PACKAGE=</xsl:text>
         <xsl:with-param name="path" select=".//sect1info/address/text()"/>
       </xsl:call-template>
       <xsl:if test = "( ../@id = 'chapter-building-system' or
-                        ../@id = 'chapter-config'         or
-                        ../@id = 'chapter-bootable'       or
+                        ../@id = 'chapter-config'          or
+                        ../@id = 'chapter-bootscripts'     or
+                        ../@id = 'chapter-bootable'        or
                         starts-with(@id,'ch-system') ) and $pkgmngt = 'y'">
 <!-- the last alternative for old books where some sections in
      chapter-config had ch-system -->
