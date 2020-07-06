@@ -411,7 +411,8 @@ if [[ "$REBUILD_MAKEFILE" = "n" ]] ; then
 
 # Copy packageManager.xml, if needed
   [[ "$PKGMNGT" = "y" ]] && [[ "$PROGNAME" = "lfs" ]] && {
-    cp "$PKGMNGTDIR/packageManager.xml" "$JHALFSDIR/"
+    sed s@BOOK@"$BOOK"@ "$PKGMNGTDIR/packageManager.xml" > \
+                        "$JHALFSDIR/"packageManager.xml
     cp "$PKGMNGTDIR/packInstall.sh" "$JHALFSDIR/"
     }
 
