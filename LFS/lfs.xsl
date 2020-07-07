@@ -172,9 +172,7 @@ otherwise it is in /bin.-->
                                                         ]//userinput"
            mode="pkgmngt"/>
       </xsl:if>
-      <xsl:if test="contains(@id,'createfiles')
-                and $pkgmngt='y'
-                and $bashdir='/tools'">
+      <xsl:if test="contains(@id,'createfiles') and $pkgmngt='y'">
         <xsl:apply-templates
            select="document('packageManager.xml')//sect1[
                                        @id='ch-pkgmngt-createfiles'

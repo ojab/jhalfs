@@ -33,10 +33,10 @@ rm -fv ./usr/share/info/dir  # recommended since this directory is already there
 # Right now, we have the files in the current directory. They should be moved
 # to /sources/$PACKAGE/src.
 mkdir -p ../$PACKAGE/src
-# We'll build as user tester. We need this directory to be owned by that user.
-chown -R tester ../$PACKAGE
+# We'll build as user builder. We need this directory to be owned by that user.
+chown -R builder ../$PACKAGE
 mv * ../$PACKAGE/src
-chown -R tester $PKG_DEST
+chown -R builder $PKG_DEST
 chmod -R o+r ../$PACKAGE
 
 cat > PKGBUILD <<EOF
@@ -51,7 +51,7 @@ cp -a * \$pkgdir
 }
 EOF
 # Building the binary package
-su tester -c"PATH=$PATH; makepkg -c --skipinteg" || true
+su builder -c"PATH=$PATH; makepkg -c --skipinteg" || true
 # Installing it on LFS
 if ! pacman -U --noconfirm /var/lib/packages/$ARCHIVE_NAME; then
      pacman -U --noconfirm --overwrite '*' /var/lib/packages/$ARCHIVE_NAME

@@ -497,8 +497,7 @@ CacheDir = /var/cache/pacman/pkg/
 LogFile  = /var/log/pacman.log
 SigLevel = Never
 # Repository: do not add one now: repo-add needs openssl.
-EOF
-chown tester:tester /var/lib/{packages,pacman}</userinput></screen>
+EOF</userinput></screen>
 
   </sect2>
 
@@ -550,11 +549,17 @@ following line -->
   <title>Creating Essential Files</title>
 
 <screen><userinput>if ! grep -q tester /etc/passwd; then
-    echo "tester:x:101:101::/home/tester:/bin/bash" >> /etc/passwd
-    echo "tester:x:101:" >> /etc/group
-    install -o tester -d /home/tester
+    echo "builder:x:101:101::/home/builder:/bin/bash" >> /etc/passwd
+    echo "builder:x:101:" >> /etc/group
+    install -o builder -d /home/builder
+else
+    TEST_UID=$(grep tester /etc/passwd | cut -d: -f3)
+    TEST_GID=$(grep tester /etc/group | cut -d: -f3)
+    echo "builder:x:$((TEST_UID+1)):$((TEST_GID+1))::/home/builder:/bin/bash" >> /etc/passwd
+    echo "builder:x:$((TEST_GID+1)):" >> /etc/group
+    install -o builder -d /home/builder
 fi
-chown tester:tester /var/lib/{packages,pacman}</userinput></screen>
+chown builder:builder /var/lib/{packages,pacman}</userinput></screen>
 
 </sect1>
 
