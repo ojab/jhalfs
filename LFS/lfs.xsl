@@ -391,7 +391,7 @@ set +h
 set -e
 </xsl:text>
         <xsl:call-template name="start-script">
-          <xsl:with-param name="order" select="concat($order,'-',position())"/>
+          <xsl:with-param name="order" select="concat($order,'-',$pos)"/>
         </xsl:call-template>
         <xsl:apply-templates
            select=".//screen[not(@role) or
