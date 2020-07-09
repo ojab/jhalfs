@@ -74,7 +74,11 @@ mkdir -pv /var/lib/packages</userinput></screen>
   <title>Files</title>
   <para><command>porgball</command> needs <filename>porgrc</filename>
     in <filename class="directory">/etc</filename>:</para>
-  <screen><userinput>cp /tools/etc/porgrc /etc</userinput></screen>
+
+<screen><userinput>if [ -f /tools/etc/porgrc ]; then
+    cp /tools/etc/porgrc /etc
+fi</userinput></screen>
+
 </sect1>
 
 <sect1 id="ch-chroot-pkgmngt" role="wrap">
