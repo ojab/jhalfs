@@ -311,6 +311,12 @@ rm -fv $PKG_DEST/sbin/nologin
 done
 [ -d $PKG_DEST/lib64 ] &amp;&amp; [ -z "$(ls $PKG_DEST/lib64)" ] &amp;&amp;
   rmdir -v $PKG_DEST/lib64
+<!-- prevent overwriting symlinks: if a package install something in
+     these directories, it'll be lost if not using package management,
+     since they are symlinks to tmpfs. So, remove it too if using PM. -->
+rm -rf $PKG_DEST/var/{run,lock}
+<!-- Remove /var if it is empty, then -->
+[ -d $PKG_DEST/var ] &amp;&amp; [ -z "$(ls $PKG_DEST/var)" ] &amp;&amp; rmdir -v $PKG_DEST/var
 PREV_SEC=${SECONDS}
 packInstall
 SECONDS=${PREV_SEC}
