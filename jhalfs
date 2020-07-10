@@ -475,10 +475,16 @@ if [[ "$REBUILD_MAKEFILE" = "n" ]] ; then
 
 fi
 
-# When regenerating the Makefile, we need to know also the
-# canonical book version
 # shellcheck disable=SC2034
 if [[ "$REBUILD_MAKEFILE" = "y" ]] ; then
+# Sanity check: users tend to tick "rebuild Makefile"
+# without generating one first. Check we have one:
+  if [ ! -f $MKFILE ]; then
+    set -e
+    error_message "You cannot \"rebuild Makefile\" without first building one"
+  fi
+# When regenerating the Makefile, we need to know also the
+# canonical book version
   case $PROGNAME in
     clfs* )
       VERSION=$(xmllint --noent "$BOOK/prologue/$ARCH/bookinfo.xml" 2>/dev/null | grep subtitle | sed -e 's/^.*ion //'  -e 's/<\/.*//') ;;
