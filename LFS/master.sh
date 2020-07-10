@@ -242,7 +242,7 @@ build_Makefile() {           #
 
   # We need to know the chapter numbering, which depends on the version
   # of the book. Use the number of subdirs to know which version we have
-  chaps=($(echo *))
+  chaps=($(echo chapter*))
   nb_chaps=${#chaps[*]} # 5 if classical version, 7 if new version
 # DEBUG
 #  echo chaps: ${chaps[*]}
