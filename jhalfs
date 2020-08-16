@@ -227,9 +227,11 @@ case $BRANCH_ID in
       lfs )
         LFSVRS=${BRANCH_ID}
         TREE=tags/${BRANCH_ID}
-        if (( ${BRANCH_ID:0:1} < 7 )) ; then
-            TREE=${TREE}/BOOK
-        fi
+        case ${BRANCH_ID:0:2} in
+            10) ;;
+            [789]*) ;;
+            *) TREE=${TREE}/BOOK ;;
+        esac
         ;;
       hlfs )
         LFSVRS=${BRANCH_ID}
