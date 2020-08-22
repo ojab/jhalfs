@@ -228,7 +228,7 @@ case $BRANCH_ID in
         LFSVRS=${BRANCH_ID}
         TREE=tags/${BRANCH_ID}
         case ${BRANCH_ID:0:2} in
-            10) ;;
+            [1-9][0-9]) ;;
             [789]*) ;;
             *) TREE=${TREE}/BOOK ;;
         esac
