@@ -31,7 +31,7 @@ wrt_save_work() {               #
 (
     cat << EOF
 	@mkdir -p /tmp >>logs/\$@ 2>&1 && \\
-	TARNAME=chapter5-\$\$(date -Iseconds).tar && \\
+	TARNAME=chapter5-\$\$(date +%Y-%m-%d-T-%Hh%M).tar && \\
         TMPFILE=\$\$(mktemp -p /tmp) && \\
         TMPLOG=\$\$(mktemp -p /tmp) && \\
 	for F in $PRUNEPATH; do echo \$\$F >> \$\$TMPFILE; done && \\
