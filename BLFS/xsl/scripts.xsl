@@ -419,7 +419,11 @@ echo "</xsl:text>
                              mode="package"/>
       </xsl:when>
       <!-- Additional package information -->
-      <!-- special case for llvm -->
+      <!-- special cases for llvm -->
+      <xsl:when test="contains(string(),'recommended Download')">
+        <xsl:apply-templates select="following-sibling::itemizedlist[1]"
+                             mode="additional"/>
+      </xsl:when>
       <xsl:when test="contains(string(),'Optional Download')">
         <xsl:apply-templates select="following-sibling::itemizedlist"
                              mode="additional"/>
