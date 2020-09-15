@@ -420,7 +420,7 @@ echo "</xsl:text>
       </xsl:when>
       <!-- Additional package information -->
       <!-- special cases for llvm -->
-      <xsl:when test="contains(string(),'recommended Download')">
+      <xsl:when test="contains(string(),'Recommended Download')">
         <xsl:apply-templates select="following-sibling::itemizedlist[1]"
                              mode="additional"/>
       </xsl:when>
