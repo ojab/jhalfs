@@ -18,9 +18,6 @@ case $1 in
   wireless_tools*|LVM2*)
     VERSION=$(echo $1 | sed 's/^[^.]*\.//')
     ;;
-  x264*)
-    VERSION=$(echo $1 | sed 's/.*shot-//')
-    ;;
   icu*) # No version in PCKGVRS! Use version directly from xml book.
         # JH_PACK_INSTALL contains the path to this script, which is in the
         # parent dir of the book.
