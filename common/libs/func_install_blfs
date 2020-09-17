@@ -62,8 +62,10 @@ sudo make -j1 -C $BUILDDIR$BLFS_ROOT             \
           $BUILDDIR$BLFS_ROOT/packages.xml
 
 # But then $BUILDDIR/var/lib/ is owned by root if just created, which
-# prevents $LUSER to create "nss_db". Change ownership here
-sudo chown $LUSER:$LGROUP $BUILDDIR/var/lib
+# prevents $LUSER to create "nss_db". The problem is that $LUSER
+# May not have been created yet. So do not change ownership here
+# and do it in master.sh for chapter 4.
+#sudo chown $LUSER:$LGROUP $BUILDDIR/var/lib
 
 # Because the BLFS Makefile is supposed to be used in chroot (or booted)
 # mode, the tracking file has wrong path for DTD. Change it:

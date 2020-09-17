@@ -70,7 +70,7 @@ chapter_targets() {       #
                        cp ${CONFIG} $BUILDDIR/sources/kernel-config  ;;
     esac
     # Grab the name of the target
-    # This is only use to check the name in "opt_override" or "BLACKIST"
+    # This is only used to check the name in "opt_override" or "BLACKIST"
     name=`echo ${this_script} | sed -e 's@[0-9]\{3,4\}-@@' \
                                     -e 's@-pass[0-9]\{1\}@@' \
                                     -e 's@-libstdc++@@' \
@@ -142,6 +142,8 @@ chapter_targets() {       #
     case "${this_script}" in
       *addinguser)
 (
+# /var/lib may already exist and be owned by root if blfs tools
+# have been installed.
 cat << EOF
 	@if [ -f luser-id ]; then \\
 	  function useradd() { true; }; \\
@@ -152,6 +154,8 @@ cat << EOF
 	\$(CMDSDIR)/`dirname $file`/\$@ >> \$(LOGDIR)/\$@ 2>&1; \\
 	\$(PRT_DU) >>logs/\$@
 	@chown \$(LUSER):\$(LGROUP) envars
+	@[ -d "\$(MOUNT_PT)/var/lib" ] && \\
+	    chown \$(LUSER):\$(LGROUP) \$(MOUNT_PT)/var/lib
 	@chmod -R a+wt $JHALFSDIR
 	@chmod a+wt \$(SRCSDIR)
 EOF
