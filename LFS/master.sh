@@ -154,8 +154,9 @@ cat << EOF
 	\$(CMDSDIR)/`dirname $file`/\$@ >> \$(LOGDIR)/\$@ 2>&1; \\
 	\$(PRT_DU) >>logs/\$@
 	@chown \$(LUSER):\$(LGROUP) envars
-	@[ -d "\$(MOUNT_PT)/var/lib" ] && \\
-	    chown \$(LUSER):\$(LGROUP) \$(MOUNT_PT)/var/lib
+	@if [ -d "\$(MOUNT_PT)/var/lib" ]; then \\
+	    chown \$(LUSER):\$(LGROUP) \$(MOUNT_PT)/var/lib; \\
+	fi
 	@chmod -R a+wt $JHALFSDIR
 	@chmod a+wt \$(SRCSDIR)
 EOF
