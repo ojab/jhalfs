@@ -212,7 +212,7 @@ update:
 		sed 's/.*>\([^<]*\)<.*/\1/' | \\
 		sort | uniq); do \\
 	    case "x\$\$pack" in \\
-	      xtcl | xexpect | xdejagnu | xgcc* | *pass[12] | xvim | \\
+	      xgcc* | *pass[12] | xvim | \\
 	      xshadow | xPython | xlinux-headers | xdbus | xsystemd )\\
 		continue ;; \\
 	    esac; \\
