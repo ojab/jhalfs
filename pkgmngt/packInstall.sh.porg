@@ -98,8 +98,8 @@ wrapInstall() {
 # a bash command is passed as an argument (that may be a compound command).
 # It is executed by this function, after various set-ups...
 
-# Note that PKGDIR is changed to UNPACKDIR
-# and PKG_DEST is changed to PKG_DIR in BLFS tools.
+# Note that PKGDIR is changed to JH_UNPACKDIR
+# and PKG_DEST is changed to JH_PKG_DIR in BLFS tools.
 # The sed for PACKAGE is therefore not needed in BLFS,
 # but it does not hurt, either.
 local PCKGVRS=$(basename $PKGDIR)
