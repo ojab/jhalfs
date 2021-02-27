@@ -11,7 +11,8 @@
   <xsl:template match="/">
     <xsl:apply-templates select="//userinput[contains(string(),'--bind') or
                                              contains(string(),'/proc') or
-                                             contains(string(),'readlink')]"/>
+                                             contains(string(),'readlink') or
+                                             contains(string(),'-Rv')]"/>
   </xsl:template>
 
   <xsl:template match="userinput">
