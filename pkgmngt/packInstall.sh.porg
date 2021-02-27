@@ -67,7 +67,7 @@ case $1 in
   cacerts*)
     VERSION=0.1
     ;;
-  btrfs*|node*|pnmixer*|libhandy*)
+  btrfs*|node*|pnmixer*)
     VERSION=$(echo $1 | sed 's/^.*v//')
     ;;
   x265*) # can contain vd.d or just d.d: thanks to packagers
@@ -76,7 +76,7 @@ case $1 in
   libuv*|Test-MockModule*) # can contain -vd.d or just -d.d
     VERSION=$(echo $1 | sed 's/^.*[v-]//')
     ;;
-  junit*) # can contain -rd.d or just -d.d
+  junit*|inih*) # can contain -rd.d or just -d.d
     VERSION=$(echo $1 | sed 's/^.*[r-]//')
     ;;
   *)
