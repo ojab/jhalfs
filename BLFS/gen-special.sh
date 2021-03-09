@@ -133,7 +133,11 @@ EOF
       if [ "$i" = "$packname" ]; then break; fi
       precpack=$i
     done
-
+# It may happen that packname is not in list_cat, because its entity
+# is commented out in the xml, but we do not check that (too complicated).
+# In that case, the whole list is scanned, and $precpack=$i at the end.
+# when packname is found in the list $precpack!=$i.
+    if [ "$precpack" = "$i" ]; then continue; fi
     cat >>$SPECIAL_FILE << EOF
         <module><xsl:text>&#xA;          </xsl:text>
           <xsl:element name="name">$packname</xsl:element>
